@@ -59,7 +59,7 @@ RademacherBlinds.prototype.configureAccessory = function(accessory) {
 RademacherBlinds.prototype.addAccessory = function(blind) {
     this.log("Found: %s [%s]", blind.description, blind.serial);
 
-    var accessory = new Accessory(blind.description + blind.serial, UUIDGen.generate(blind.serial));
+    var accessory = new Accessory(blind.description, UUIDGen.generate(blind.serial));
     accessory.addService(Service.WindowCovering, blind.description);
     this.accessories[accessory.UUID] = new RademacherBlindsAccessory(this.log, accessory, blind, this.url);
 
@@ -78,6 +78,17 @@ RademacherBlinds.prototype.removeAccessory = function(accessory) {
 
 function RademacherBlindsAccessory(log, accessory, blind, url) {
     var self = this;
+
+    var info = accessory.getService(Service.AccessoryInformation);
+
+    accessory.context.manufacturer = "Rademacher";
+    info.setCharacteristic(Characteristic.Manufacturer, accessory.context.manufacturer.toString());
+
+    accessory.context.model = blind.productName;
+    info.setCharacteristic(Characteristic.Model, accessory.context.model.toString());
+
+    accessory.context.serial = blind.serial;
+    info.setCharacteristic(Characteristic.SerialNumber, accessory.context.serial.toString());
 
     this.accessory = accessory;
     this.blind = blind;
@@ -105,7 +116,7 @@ function RademacherBlindsAccessory(log, accessory, blind, url) {
         .on('set', this.setTargetPosition.bind(this));
 
     this.service.getCharacteristic(Characteristic.PositionState)
-        .setValue("2")
+        .setValue(this.currentPositionState)
         .on('get', this.getPositionState.bind(this));
 
     accessory.updateReachability(true);
@@ -160,7 +171,7 @@ RademacherBlindsAccessory.prototype.getCurrentPosition = function(callback) {
 };
 
 RademacherBlindsAccessory.prototype.getPositionState = function(callback) {
-    callback(null);
+    callback(null, this.currentPositionState);
 };
 
 function reversePercentage(p) {
