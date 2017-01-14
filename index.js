@@ -33,7 +33,7 @@ function RademacherBlinds(log, config, api) {
                 if(e) return new Error("Request failed.");
                 var body = JSON.parse(b);
                 body.devices.forEach(function(data) {
-                    if(data.productName.includes("RolloTron"))
+                    if(data.productName.includes("RolloTron") || data.productName.includes("Troll Comfort"))
                     {
                         var uuid = UUIDGen.generate(data.serial);
                         var accessory = self.accessories[uuid];
