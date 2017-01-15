@@ -57,10 +57,15 @@ RademacherBlinds.prototype.configureAccessory = function(accessory) {
 };
 
 RademacherBlinds.prototype.addAccessory = function(blind) {
-    this.log("Found: %s [%s]", blind.description, blind.serial);
+    this.log("Found: %s - %s [%s]", blind.name, blind.description, blind.serial);
 
-    var accessory = new Accessory(blind.description, UUIDGen.generate(blind.serial));
-    accessory.addService(Service.WindowCovering, blind.description);
+    var name = null;
+    if(!blind.description.trim())
+        name = blind.name;
+    else
+        name = blind.description;
+    var accessory = new Accessory(name, UUIDGen.generate(blind.serial));
+    accessory.addService(Service.WindowCovering, name);
     this.accessories[accessory.UUID] = new RademacherBlindsAccessory(this.log, accessory, blind, this.url);
 
     this.api.registerPlatformAccessories("homebridge-rademacher-blinds", "RademacherBlinds", [accessory]);
@@ -97,11 +102,6 @@ function RademacherBlindsAccessory(log, accessory, blind, url) {
     this.lastPosition = reversePercentage(this.blind.position);
     this.currentPositionState = 2;
     this.currentTargetPosition = 100;
-
-    this.accessory.on('identify', function(paired, callback) {
-        this.log("%s - identify", this.accessory.displayName);
-        this.blind.identify(callback);
-    }.bind(this));
 
     this.service = accessory.getService(Service.WindowCovering);
 
