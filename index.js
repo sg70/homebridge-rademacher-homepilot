@@ -11,7 +11,6 @@ module.exports = function(homebridge) {
 };
 
 function RademacherBlinds(log, config, api) {
-    console.log("RademacherBlinds init");
     // global vars
     this.log = log;
 
@@ -113,10 +112,12 @@ function RademacherBlindsAccessory(log, accessory, blind, url) {
     this.service
         .getCharacteristic(Characteristic.TargetPosition)
         .setValue(reversePercentage(self.blind.position))
+        .on('get', this.getTargetPosition.bind(this))
         .on('set', this.setTargetPosition.bind(this));
 
     this.service.getCharacteristic(Characteristic.PositionState)
         .setValue(this.currentPositionState)
+        .on('set', this.setPositionState.bind(this))
         .on('get', this.getPositionState.bind(this));
 
     accessory.updateReachability(true);
@@ -139,11 +140,35 @@ RademacherBlindsAccessory.prototype.setTargetPosition = function(value, callback
         if(e) return callback(new Error("Request failed."), false);
         if(r.statusCode == 200)
         {
+            self.service.setCharacteristic(Characteristic.CurrentPosition, self.currentTargetPosition);
             self.service.setCharacteristic(Characteristic.PositionState, 2);
-            self.service.setCharacteristic(Characteristic.CurrentPosition, value);
-            self.lastPosition = value;
-            callback(null);
+            self.lastPosition = self.currentTargetPosition;
+            callback(null, self.currentTargetPosition);
         }
+    });
+};
+
+RademacherBlindsAccessory.prototype.getTargetPosition = function(callback) {
+    this.log("%s - Getting target position", this.accessory.displayName);
+
+    var self = this;
+    var serial = this.blind.serial;
+
+    request.get({
+        timeout: 1500,
+        strictSSL: false,
+        url: this.url + "?devices=1"
+    }, function(e,r,b) {
+        if(e) return callback(new Error("Request failed."), false);
+        var body = JSON.parse(b);
+        body.devices.forEach(function(data) {
+            if(data.serial == serial)
+            {
+                var pos = reversePercentage(data.position);
+                self.currentTargetPosition = pos;
+                callback(null, pos);
+            }
+        });
     });
 };
 
@@ -163,8 +188,8 @@ RademacherBlindsAccessory.prototype.getCurrentPosition = function(callback) {
         body.devices.forEach(function(data) {
             if(data.serial == serial)
             {
-                self.lastPosition = reversePercentage(data.position);
-                callback(null, reversePercentage(data.position));
+                var pos = reversePercentage(data.position);
+                callback(null, pos);
             }
         });
     });
@@ -172,6 +197,10 @@ RademacherBlindsAccessory.prototype.getCurrentPosition = function(callback) {
 
 RademacherBlindsAccessory.prototype.getPositionState = function(callback) {
     callback(null, this.currentPositionState);
+};
+
+RademacherBlindsAccessory.prototype.setPositionState = function(value, callback) {
+    callback(null);
 };
 
 function reversePercentage(p) {
