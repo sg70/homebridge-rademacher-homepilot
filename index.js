@@ -117,7 +117,6 @@ function RademacherBlindsAccessory(log, accessory, blind, url) {
 
     this.service.getCharacteristic(Characteristic.PositionState)
         .setValue(this.currentPositionState)
-        .on('set', this.setPositionState.bind(this))
         .on('get', this.getPositionState.bind(this));
 
     accessory.updateReachability(true);
@@ -197,10 +196,6 @@ RademacherBlindsAccessory.prototype.getCurrentPosition = function(callback) {
 
 RademacherBlindsAccessory.prototype.getPositionState = function(callback) {
     callback(null, this.currentPositionState);
-};
-
-RademacherBlindsAccessory.prototype.setPositionState = function(value, callback) {
-    callback(null);
 };
 
 function reversePercentage(p) {
