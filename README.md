@@ -8,6 +8,7 @@ The plugin is published through [NPM](https://www.npmjs.com/package/homebridge-r
 npm install -g homebridge-rademacher-blinds
 ```
 Update your config.json file. See config.json in this repository for a sample.
+The "inverted" configuration switch can be used to show open shades as closed or closed shades as open. (true per default because 0% in the homepilot means open, whereas 0% in the Home app means closed)
 
 # Configuration
 
@@ -17,7 +18,8 @@ Configuration sample:
       {
         "platform": "RademacherBlinds",
         "name": "RademacherBlinds",
-        "url": "http://192.168.0.1/deviceajax.do"
+        "url": "http://192.168.0.1/deviceajax.do",
+        "inverted": true
       }
     ]
 ```

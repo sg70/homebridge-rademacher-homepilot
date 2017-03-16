@@ -19,6 +19,7 @@ function RademacherBlinds(log, config, api) {
     // configuration vars
     this.url = config["url"];
     this.accessories = [];
+    this.inverted = config["inverted"];
 
     if (api) {
         this.api = api;
@@ -42,7 +43,7 @@ function RademacherBlinds(log, config, api) {
                         }
                         else {
                             self.log("Online: %s [%s]", accessory.displayName, data.serial);
-                            self.accessories[uuid] = new RademacherBlindsAccessory(self.log, (accessory instanceof RademacherBlindsAccessory ? accessory.accessory : accessory), data, self.url);
+                            self.accessories[uuid] = new RademacherBlindsAccessory(self.log, (accessory instanceof RademacherBlindsAccessory ? accessory.accessory : accessory), data, self.url, self.inverted);
                         }
                     }
                 });
@@ -65,7 +66,7 @@ RademacherBlinds.prototype.addAccessory = function(blind) {
         name = blind.description;
     var accessory = new Accessory(name, UUIDGen.generate(blind.serial));
     accessory.addService(Service.WindowCovering, name);
-    this.accessories[accessory.UUID] = new RademacherBlindsAccessory(this.log, accessory, blind, this.url);
+    this.accessories[accessory.UUID] = new RademacherBlindsAccessory(this.log, accessory, blind, this.url, this.inverted);
 
     this.api.registerPlatformAccessories("homebridge-rademacher-blinds", "RademacherBlinds", [accessory]);
 };
@@ -80,7 +81,7 @@ RademacherBlinds.prototype.removeAccessory = function(accessory) {
     }
 };
 
-function RademacherBlindsAccessory(log, accessory, blind, url) {
+function RademacherBlindsAccessory(log, accessory, blind, url, inverted) {
     var self = this;
 
     var info = accessory.getService(Service.AccessoryInformation);
@@ -94,11 +95,12 @@ function RademacherBlindsAccessory(log, accessory, blind, url) {
     accessory.context.serial = blind.serial;
     info.setCharacteristic(Characteristic.SerialNumber, accessory.context.serial.toString());
 
+    this.inverted = inverted;
     this.accessory = accessory;
     this.blind = blind;
     this.log = log;
     this.url = url;
-    this.lastPosition = reversePercentage(this.blind.position);
+    this.lastPosition = this.inverted ? reversePercentage(this.blind.position) : this.blind.position;
     this.currentPositionState = 2;
     this.currentTargetPosition = 100;
 
@@ -106,12 +108,12 @@ function RademacherBlindsAccessory(log, accessory, blind, url) {
 
     this.service
         .getCharacteristic(Characteristic.CurrentPosition)
-        .setValue(reversePercentage(self.blind.position))
+        .setValue(self.inverted ? reversePercentage(self.blind.position) : self.blind.position)
         .on('get', this.getCurrentPosition.bind(this));
 
     this.service
         .getCharacteristic(Characteristic.TargetPosition)
-        .setValue(reversePercentage(self.blind.position))
+        .setValue(self.inverted ? reversePercentage(self.blind.position) : self.blind.position)
         .on('get', this.getTargetPosition.bind(this))
         .on('set', this.setTargetPosition.bind(this));
 
@@ -129,8 +131,9 @@ RademacherBlindsAccessory.prototype.setTargetPosition = function(value, callback
     this.currentTargetPosition = value;
     var moveUp = (this.currentTargetPosition >= this.lastPosition);
     this.service.setCharacteristic(Characteristic.PositionState, (moveUp ? 1 : 0));
+    var target = self.inverted ? reversePercentage(value) : value;
 
-    var params = "cid=9&did="+this.blind.did+"&command=1&goto="+reversePercentage(value);
+    var params = "cid=9&did="+this.blind.did+"&command=1&goto="+ target;
     request.post({
         headers: {'content-type' : 'application/x-www-form-urlencoded'},
         url: this.url,
@@ -163,7 +166,7 @@ RademacherBlindsAccessory.prototype.getTargetPosition = function(callback) {
         body.devices.forEach(function(data) {
             if(data.serial == serial)
             {
-                var pos = reversePercentage(data.position);
+                var pos = self.inverted ? reversePercentage(data.position) : data.position;
                 self.currentTargetPosition = pos;
                 callback(null, pos);
             }
@@ -187,7 +190,7 @@ RademacherBlindsAccessory.prototype.getCurrentPosition = function(callback) {
         body.devices.forEach(function(data) {
             if(data.serial == serial)
             {
-                var pos = reversePercentage(data.position);
+                var pos = self.inverted ? reversePercentage(data.position) : data.position;
                 callback(null, pos);
             }
         });
