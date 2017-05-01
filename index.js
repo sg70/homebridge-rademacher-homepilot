@@ -7,10 +7,10 @@ module.exports = function(homebridge) {
     Characteristic = homebridge.hap.Characteristic;
     UUIDGen = homebridge.hap.uuid;
 
-    homebridge.registerPlatform("homebridge-rademacher-blinds", "RademacherBlinds", RademacherBlinds, true);
+    homebridge.registerPlatform("homebridge-rademacher-homepilot", "RademacherHomePilot", RademacherHomePilot, true);
 };
 
-function RademacherBlinds(log, config, api) {
+function RademacherHomePilot(log, config, api) {
     // global vars
     this.log = log;
 
@@ -19,7 +19,7 @@ function RademacherBlinds(log, config, api) {
     // configuration vars
     this.url = config["url"];
     this.accessories = [];
-    this.inverted = config["inverted"];
+    this.inverted = true;
 
     if (api) {
         this.api = api;
@@ -33,13 +33,15 @@ function RademacherBlinds(log, config, api) {
                 if(e) return new Error("Request failed.");
                 var body = JSON.parse(b);
                 body.devices.forEach(function(data) {
-                    if(data.productName.includes("RolloTron") || data.productName.includes("Troll Comfort"))
+                    // blinds
+                    if(data.productName.includes("RolloTron") || data.productName.includes("Troll Comfort") ||
+                       data.productName.includes("Rohrmotor") || data.productName.includes("Connect-Aktor"))
                     {
                         var uuid = UUIDGen.generate(data.serial);
                         var accessory = self.accessories[uuid];
 
                         if (accessory === undefined) {
-                            self.addAccessory(data);
+                            self.addBlindsAccessory(data);
                         }
                         else {
                             self.log("Online: %s [%s]", accessory.displayName, data.serial);
@@ -52,12 +54,12 @@ function RademacherBlinds(log, config, api) {
     }
 }
 
-RademacherBlinds.prototype.configureAccessory = function(accessory) {
+RademacherHomePilot.prototype.configureAccessory = function(accessory) {
     this.accessories[accessory.UUID] = accessory;
 };
 
-RademacherBlinds.prototype.addAccessory = function(blind) {
-    this.log("Found: %s - %s [%s]", blind.name, blind.description, blind.serial);
+RademacherHomePilot.prototype.addBlindsAccessory = function(blind) {
+    this.log("Found blinds: %s - %s [%s]", blind.name, blind.description, blind.serial);
 
     var name = null;
     if(!blind.description.trim())
@@ -71,7 +73,7 @@ RademacherBlinds.prototype.addAccessory = function(blind) {
     this.api.registerPlatformAccessories("homebridge-rademacher-blinds", "RademacherBlinds", [accessory]);
 };
 
-RademacherBlinds.prototype.removeAccessory = function(accessory) {
+RademacherHomePilot.prototype.removeAccessory = function(accessory) {
     if (accessory) {
         this.log("[" + accessory.description + "] Removed from HomeBridge.");
         if (this.accessories[accessory.UUID]) {
@@ -159,7 +161,7 @@ RademacherBlindsAccessory.prototype.getTargetPosition = function(callback) {
     request.get({
         timeout: 1500,
         strictSSL: false,
-        url: this.url + "?devices=1"
+        url: this.url + "/deviceajax.do?devices=1"
     }, function(e,r,b) {
         if(e) return callback(new Error("Request failed."), false);
         var body = JSON.parse(b);
