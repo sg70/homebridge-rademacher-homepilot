@@ -28,18 +28,18 @@ function RademacherHomePilot(log, config, api) {
             request.get({
                 timeout: 1500,
                 strictSSL: false,
-                url: this.url + "?devices=1"
+                url: this.url + "/deviceajax.do?devices=1"
             }, function(e,r,b){
                 if(e) return new Error("Request failed.");
                 var body = JSON.parse(b);
                 body.devices.forEach(function(data) {
+                    var uuid = UUIDGen.generate(data.serial);
+                    var accessory = self.accessories[uuid];
+                    
                     // blinds
                     if(data.productName.includes("RolloTron") || data.productName.includes("Troll Comfort") ||
                        data.productName.includes("Rohrmotor") || data.productName.includes("Connect-Aktor"))
                     {
-                        var uuid = UUIDGen.generate(data.serial);
-                        var accessory = self.accessories[uuid];
-
                         if (accessory === undefined) {
                             self.addBlindsAccessory(data);
                         }
@@ -47,6 +47,11 @@ function RademacherHomePilot(log, config, api) {
                             self.log("Online: %s [%s]", accessory.displayName, data.serial);
                             self.accessories[uuid] = new RademacherBlindsAccessory(self.log, (accessory instanceof RademacherBlindsAccessory ? accessory.accessory : accessory), data, self.url, self.inverted);
                         }
+                    }
+                    // unknown
+                    else
+                    {
+                       self.log("Unknown product: %s",data.productName);
                     }
                 });
             });
@@ -70,7 +75,7 @@ RademacherHomePilot.prototype.addBlindsAccessory = function(blind) {
     accessory.addService(Service.WindowCovering, name);
     this.accessories[accessory.UUID] = new RademacherBlindsAccessory(this.log, accessory, blind, this.url, this.inverted);
 
-    this.api.registerPlatformAccessories("homebridge-rademacher-blinds", "RademacherBlinds", [accessory]);
+    this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
 };
 
 RademacherHomePilot.prototype.removeAccessory = function(accessory) {
@@ -79,7 +84,7 @@ RademacherHomePilot.prototype.removeAccessory = function(accessory) {
         if (this.accessories[accessory.UUID]) {
             delete this.accessories[accessory.UUID];
         }
-        this.api.unregisterPlatformAccessories("homebridge-rademacher-blinds", "RademacherBlinds", [accessory]);
+        this.api.unregisterPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
     }
 };
 
@@ -185,9 +190,9 @@ RademacherBlindsAccessory.prototype.getCurrentPosition = function(callback) {
     request.get({
         timeout: 1500,
         strictSSL: false,
-        url: this.url + "?devices=1"
+        url: this.url + "/deviceajax.do?devices=1"
     }, function(e,r,b) {
-        if(e) return callback(new Error("Request failed."), false);
+        if(e) return callback(new Error("Request failed: "+e), false);
         var body = JSON.parse(b);
         body.devices.forEach(function(data) {
             if(data.serial == serial)
