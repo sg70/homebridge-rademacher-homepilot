@@ -54,6 +54,10 @@ function RademacherHomePilot(log, config, api) {
                         if (accessory === undefined) {
                             self.addSwitchAccessory(data);
                         }
+                        else if (data.iconset.name="Sektionaltor"){
+                            self.log("Online: %s [%s]", accessory.displayName, data.did);
+                            self.accessories[uuid] = new RademacherLockAccessory(self.log, (accessory instanceof RademacherSwitchAccessory ? accessory.accessory : accessory), data, self.url);
+                        }
                         else {
                             self.log("Online: %s [%s]", accessory.displayName, data.did);
                             self.accessories[uuid] = new RademacherSwitchAccessory(self.log, (accessory instanceof RademacherSwitchAccessory ? accessory.accessory : accessory), data, self.url);
@@ -313,6 +317,51 @@ RademacherSwitchAccessory.prototype.setCurrentState = function(value, callback) 
    }
 };
 
+function RademacherLockAccessory(log, accessory, sw, url) {
+  this.log = log;
+  this.sw = sw;
+  this.url = url;
+  this.lockservice = new Service.LockMechanism(this.sw.name);
+  
+  this.lockservice
+    .getCharacteristic(Characteristic.LockCurrentState)
+    .on('get', this.getState.bind(this));
+  
+  this.lockservice
+    .getCharacteristic(Characteristic.LockTargetState)
+    .on('get', this.getState.bind(this))
+    .on('set', this.setState.bind(this));
+	
+}
+
+LockAccessory.prototype.getState = function(callback) {
+    callback(null, true); // always locked
+}
+
+LockAccessory.prototype.setState = function(state, callback) {
+    var lockState = (state == Characteristic.LockTargetState.SECURED) ? "locked" : "unlocked";
+    this.log("Set lock state of %s to %s", this.accessory.displayName,lockState);
+
+    var self = this;
+    var params = "cid=10&did="+this.sw.did+"&command=1";
+    request.post({
+        headers: {'content-type' : 'application/x-www-form-urlencoded'},
+        url: this.url + "/deviceajax.do",
+        body: params
+        }, function(e,r,b){
+            if(e) return callback(new Error("Request failed."), false);
+            if(r.statusCode == 200)
+            {
+                this.lockservice.setCharacteristic(Characteristic.LockCurrentState, Characteristic.LockTargetState.SECURED);
+                callback(null, self.currentState);
+            }
+    });
+}
+
+
+LockAccessory.prototype.getServices = function() {
+  return [this.lockservice, this.battservice];
+}
 function reversePercentage(p) {
     var min = 0;
     var max = 100;
