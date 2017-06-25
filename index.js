@@ -51,16 +51,25 @@ function RademacherHomePilot(log, config, api) {
                     // switch
                     else if(data.productName.includes("Schaltaktor"))
                     {
-                        if (accessory === undefined) {
-                            self.addSwitchAccessory(data);
-                        }
-                        else if (data.iconset.name="Sektionaltor"){
-                            self.log("Online: %s [%s]", accessory.displayName, data.did);
-                            self.accessories[uuid] = new RademacherLockAccessory(self.log, (accessory instanceof RademacherSwitchAccessory ? accessory.accessory : accessory), data, self.url);
+                        if (data.name=="Garagentor"){
+                            if (accessory === undefined) {
+                                self.addLockAccessory(data);
+                            }
+                            else
+                            { 
+                                self.log("Online: %s [%s]", accessory.displayName, data.did);
+                                self.accessories[uuid] = new RademacherLockAccessory(self.log, (accessory instanceof RademacherSwitchAccessory ? accessory.accessory : accessory), data, self.url);
+                            }
                         }
                         else {
-                            self.log("Online: %s [%s]", accessory.displayName, data.did);
-                            self.accessories[uuid] = new RademacherSwitchAccessory(self.log, (accessory instanceof RademacherSwitchAccessory ? accessory.accessory : accessory), data, self.url);
+                            if (accessory === undefined) {
+                                self.addSwitchAccessory(data);
+                            }
+                            else
+                            {
+                                self.log("Online: %s [%s]", accessory.displayName, data.did);
+                                self.accessories[uuid] = new RademacherSwitchAccessory(self.log, (accessory instanceof RademacherSwitchAccessory ? accessory.accessory : accessory), data, self.url);
+                            }
                         }
                     }
                     // unknown
@@ -103,6 +112,20 @@ RademacherHomePilot.prototype.addSwitchAccessory = function(sw) {
     var accessory = new Accessory(name, UUIDGen.generate("did"+sw.did));
     accessory.addService(Service.Switch, name);
     this.accessories[accessory.UUID] = new RademacherSwitchAccessory(this.log, accessory, sw, this.url);
+    this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
+};
+
+RademacherHomePilot.prototype.addLockAccessory = function(sw) {
+    this.log("Found lock: %s - %s [%s]", sw.name, sw.description, sw.did);
+
+    var name = null;
+    if(!sw.description.trim())
+        name = sw.name;
+    else
+        name = sw.description;
+    var accessory = new Accessory(name, UUIDGen.generate("did"+sw.did));
+    accessory.addService(Service.Switch, name);
+    this.accessories[accessory.UUID] = new RademacherLockAccessory(this.log, accessory, sw, this.url);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
 };
 
@@ -334,11 +357,11 @@ function RademacherLockAccessory(log, accessory, sw, url) {
 	
 }
 
-LockAccessory.prototype.getState = function(callback) {
+RademacherLockAccessory.prototype.getState = function(callback) {
     callback(null, true); // always locked
 }
 
-LockAccessory.prototype.setState = function(state, callback) {
+RademacherLockAccessory.prototype.setState = function(state, callback) {
     var lockState = (state == Characteristic.LockTargetState.SECURED) ? "locked" : "unlocked";
     this.log("Set lock state of %s to %s", this.accessory.displayName,lockState);
 
@@ -359,9 +382,10 @@ LockAccessory.prototype.setState = function(state, callback) {
 }
 
 
-LockAccessory.prototype.getServices = function() {
-  return [this.lockservice, this.battservice];
+RademacherLockAccessory.prototype.getServices = function() {
+  return [this.lockservice];
 }
+
 function reversePercentage(p) {
     var min = 0;
     var max = 100;
