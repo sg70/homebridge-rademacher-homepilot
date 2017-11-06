@@ -38,7 +38,8 @@ function RademacherHomePilot(log, config, api) {
                     
                     // blinds
                     if(data.productName.includes("RolloTron") || data.productName.includes("Troll Comfort") ||
-                       data.productName.includes("Rohrmotor") || data.productName.includes("Connect-Aktor"))
+                       data.productName.includes("Rohrmotor") || data.productName.includes("Connect-Aktor") ||
+                       data.productName.includes("RolloTube"))
                     {
                         if (accessory === undefined) {
                             self.addBlindsAccessory(data);
@@ -48,17 +49,17 @@ function RademacherHomePilot(log, config, api) {
                             self.accessories[uuid] = new RademacherBlindsAccessory(self.log, (accessory instanceof RademacherBlindsAccessory ? accessory.accessory : accessory), data, self.url, self.inverted);
                         }
                     }
-                    // switch
-                    else if(data.productName.includes("Schaltaktor"))
+                    // lock/switch
+                    else if(data.productName.includes("Schaltaktor") || data.productName.includes("Universal-Aktor"))
                     {
-                        if (data.name=="Garagentor"){
+                        if (data.iconSet.name.includes("tor")){
                             if (accessory === undefined) {
                                 self.addLockAccessory(data);
                             }
                             else
                             { 
                                 self.log("Online: %s [%s]", accessory.displayName, data.did);
-                                self.accessories[uuid] = new RademacherLockAccessory(self.log, (accessory instanceof RademacherSwitchAccessory ? accessory.accessory : accessory), data, self.url);
+                                self.accessories[uuid] = new RademacherLockAccessory(self.log, (accessory instanceof RademacherLockAccessory ? accessory.accessory : accessory), data, self.url);
                             }
                         }
                         else {
@@ -124,7 +125,7 @@ RademacherHomePilot.prototype.addLockAccessory = function(sw) {
     else
         name = sw.description;
     var accessory = new Accessory(name, UUIDGen.generate("did"+sw.did));
-    accessory.addService(Service.Switch, name);
+    accessory.addService(Service.LockMechanism, name);
     this.accessories[accessory.UUID] = new RademacherLockAccessory(this.log, accessory, sw, this.url);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
 };
@@ -215,7 +216,7 @@ RademacherBlindsAccessory.prototype.getTargetPosition = function(callback) {
     var did = this.blind.did;
 
     request.get({
-        timeout: 1500,
+        timeout: 2500,
         strictSSL: false,
         url: this.url + "/deviceajax.do?devices=1"
     }, function(e,r,b) {
@@ -239,7 +240,7 @@ RademacherBlindsAccessory.prototype.getCurrentPosition = function(callback) {
     var did = this.blind.did;
 
     request.get({
-        timeout: 1500,
+        timeout: 2500,
         strictSSL: false,
         url: this.url + "/deviceajax.do?devices=1"
     }, function(e,r,b) {
@@ -344,7 +345,8 @@ function RademacherLockAccessory(log, accessory, sw, url) {
   this.log = log;
   this.sw = sw;
   this.url = url;
-  this.lockservice = new Service.LockMechanism(this.sw.name);
+  this.accessory = accessory;
+  this.lockservice = accessory.getService(Service.LockMechanism);
   
   this.lockservice
     .getCharacteristic(Characteristic.LockCurrentState)
@@ -358,14 +360,15 @@ function RademacherLockAccessory(log, accessory, sw, url) {
 }
 
 RademacherLockAccessory.prototype.getState = function(callback) {
-    callback(null, true); // always locked
+    this.log("Get lock state of %s", this.accessory.displayName)
+    callback(null, true);
 }
 
 RademacherLockAccessory.prototype.setState = function(state, callback) {
-    var lockState = (state == Characteristic.LockTargetState.SECURED) ? "locked" : "unlocked";
+    var self=this;
+    var lockState = (state == Characteristic.LockTargetState.SECURED) ? "lock" : "unlock";
     this.log("Set lock state of %s to %s", this.accessory.displayName,lockState);
 
-    var self = this;
     var params = "cid=10&did="+this.sw.did+"&command=1";
     request.post({
         headers: {'content-type' : 'application/x-www-form-urlencoded'},
@@ -375,8 +378,10 @@ RademacherLockAccessory.prototype.setState = function(state, callback) {
             if(e) return callback(new Error("Request failed."), false);
             if(r.statusCode == 200)
             {
-                this.lockservice.setCharacteristic(Characteristic.LockCurrentState, Characteristic.LockTargetState.SECURED);
-                callback(null, self.currentState);
+                // alway unlock
+                self.lockservice.setCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.UNSECURED);
+                self.lockservice.setCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.SECURED)
+                callback(null);
             }
     });
 }
