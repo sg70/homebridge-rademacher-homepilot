@@ -331,14 +331,22 @@ RademacherSwitchAccessory.prototype.setCurrentState = function(value, callback) 
            url: this.url + "/deviceajax.do",
            body: params
        }, function(e,r,b){
-        if(e) return callback(new Error("Request failed."), false);
-        if(r.statusCode == 200)
-        {
-            self.lastState = self.currentState;
-            callback(null, self.currentState);
-        }
-    });
-   }
+            if(e) return callback(new Error("Request failed."), self.currentState);
+            if(r.statusCode == 200)
+            {
+                self.lastState = self.currentState;
+                return callback(null, self.currentState);
+            }
+            else
+            {
+                return callback(new Error("Request failed with status "+r.statusCode), self.currentState);
+            }
+        });
+    }
+    else
+    {
+        return callback(null,this.currentState);
+    }
 };
 
 function RademacherLockAccessory(log, accessory, sw, url) {
