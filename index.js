@@ -49,6 +49,17 @@ function RademacherHomePilot(log, config, api) {
                             self.accessories[uuid] = new RademacherBlindsAccessory(self.log, (accessory instanceof RademacherBlindsAccessory ? accessory.accessory : accessory), data, self.url, self.inverted);
                         }
                     }
+                    // dimmer
+                    else if(data.productName.includes("Universaldimmer"))
+                    {
+                        if (accessory === undefined) {
+                            self.addDimmerAccessory(data);
+                        }
+                        else {
+                            self.log("Online: %s [%s]", accessory.displayName, data.did);
+                            self.accessories[uuid] = new RademacherDimmerAccessory(self.log, (accessory instanceof RademacherDimmerAccessory ? accessory.accessory : accessory), data, self.url, self.inverted);
+                        }
+                    }
                     // lock/switch
                     else if(data.productName.includes("Schaltaktor") || data.productName.includes("Universal-Aktor"))
                     {
@@ -99,6 +110,20 @@ RademacherHomePilot.prototype.addBlindsAccessory = function(blind) {
     var accessory = new Accessory(name, UUIDGen.generate("did"+blind.did));
     accessory.addService(Service.WindowCovering, name);
     this.accessories[accessory.UUID] = new RademacherBlindsAccessory(this.log, accessory, blind, this.url, this.inverted);
+    this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
+};
+
+RademacherHomePilot.prototype.addDimmerAccessory = function(dimmer) {
+    this.log("Found dimmer: %s - %s [%s]", dimmer.name, dimmer.description, dimmer.did);
+
+    var name = null;
+    if(!dimmer.description.trim())
+        name = dimmer.name;
+    else
+        name = dimmer.description;
+    var accessory = new Accessory(name, UUIDGen.generate("did"+dimmer.did));
+    accessory.addService(Service.Lightbulb, name);
+    this.accessories[accessory.UUID] = new RademacheDimmerAccessory(this.log, accessory, dimmer, this.url, this.inverted);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
 };
 
@@ -398,6 +423,159 @@ RademacherLockAccessory.prototype.setState = function(state, callback) {
 RademacherLockAccessory.prototype.getServices = function() {
   return [this.lockservice];
 }
+
+function RademacherDimmerAccessory(log, accessory, dimmer, url, inverted) {
+    var self = this;
+
+    var info = accessory.getService(Service.AccessoryInformation);
+
+    accessory.context.manufacturer = "Rademacher";
+    info.setCharacteristic(Characteristic.Manufacturer, accessory.context.manufacturer.toString());
+
+    accessory.context.model = dimmer.productName;
+    info.setCharacteristic(Characteristic.Model, accessory.context.model.toString());
+
+    accessory.context.serial = dimmer.serial;
+    info.setCharacteristic(Characteristic.SerialNumber, accessory.context.serial.toString());
+
+    this.inverted = inverted;
+    this.accessory = accessory;
+    this.dimmer = dimmer;
+    this.log = log;
+    this.url = url;
+    this.lastBrightness = this.inverted ? reversePercentage(this.dimmer.brightness) : this.dimmer.brightness;
+    this.currentBrightness = 2;
+    this.currentStatus = 100;
+
+    this.service = accessory.getService(Service.Lightbulb);
+
+    this.service.getCharacteristic(Characteristic.On)
+        .on('get', this.getStatus.bind(this))
+        .on('set', this.setStatus.bind(this));
+
+    this.service.getCharacteristic(Characteristic.Brightness)
+        .on('get', this.getBrightness.bind(this))
+        .on('set', this.setBrightness.bind(this));
+
+    accessory.updateReachability(true);
+}
+
+RademacherDimmerAccessory.prototype.isInt = function (value) {
+    return /^-?[0-9]+$/.test(value);
+};
+
+RademacherDimmerAccessory.prototype.getStatus = function (callback) {
+    this.log("%s - Getting current state for %s", this.accessory.displayName, this.accessory.UUID);
+
+    var self = this;
+    var serial = this.sw.serial;
+    var name = this.sw.name;
+
+    request.get({
+        timeout: 1500,
+        strictSSL: false,
+        url: this.url + "/deviceajax.do?devices=1"
+    }, function(e,r,b) {
+        if(e) return callback(new Error("Request failed: "+e), false);
+        var body = JSON.parse(b);
+        body.devices.forEach(function(data) {
+            if(data.serial == serial && data.name == name)
+            {
+                var pos = data.position;
+                callback(null, (pos>0?true:false));
+            }
+        });
+    });
+};
+
+RademacherDimmerAccessory.prototype.setStatus = function (status, callback, context) {
+    if (context !== 'fromSetValue') {
+        this.on = status;
+        this.log("%s - Setting switch: %s", this.accessory.displayName, value);
+
+        var self = this;
+        this.currentState = value;
+        var changed = (this.currentState != this.lastState);
+        this.log("%s - switch changed=%s", this.accessory.displayName, changed);
+        if (changed)
+        {
+           var params = "cid="+(this.currentState?"10":"11")+"&did="+this.sw.did+"&command=1";
+           request.post({
+               headers: {'content-type' : 'application/x-www-form-urlencoded'},
+               url: this.url + "/deviceajax.do",
+               body: params
+           }, function(e,r,b){
+                if(e) return callback(new Error("Request failed."), self.currentState);
+                if(r.statusCode == 200)
+                {
+                    self.lastState = self.currentState;
+                    return callback(null, self.currentState);
+                }
+                else
+                {
+                    return callback(new Error("Request failed with status "+r.statusCode), self.currentState);
+                }
+            });
+        }
+        else
+        {
+            return callback(null,this.currentState);
+        }
+    }
+};
+
+RademacherDimmerAccessory.prototype.getBrightness = function (callback) {
+    this.log("%s - Getting current brightness", this.accessory.displayName);
+
+    var self = this;
+    var did = this.dimmer.did;
+
+    request.get({
+        timeout: 2500,
+        strictSSL: false,
+        url: this.url + "/deviceajax.do?devices=1"
+    }, function(e,r,b) {
+        if(e) return callback(new Error("Request failed: "+e), false);
+        var body = JSON.parse(b);
+        body.devices.forEach(function(data) {
+            if(data.did == did)
+            {
+                var pos = self.inverted ? reversePercentage(data.position) : data.position;
+                callback(null, pos);
+            }
+        });
+    });
+};
+
+RademacherDimmerAccessory.prototype.setBrightness = function (brightness, callback, context) {
+    if (context !== 'fromSetValue') {
+        this.log("%s - Setting target position: %s", this.accessory.displayName, value);
+        var self = this;
+        this.currentBrightness = brightness;
+        var moveUp = (this.currentBrightness >= this.lastBrightness);
+        this.service.setCharacteristic(Characteristic.Brightness, (moveUp ? 1 : 0));
+        var target = self.inverted ? reversePercentage(brightness) : brightness;
+    
+        var params = "cid=9&did="+this.blind.did+"&command=1&goto="+ target;
+        request.post({
+            headers: {'content-type' : 'application/x-www-form-urlencoded'},
+            url: this.url + "/deviceajax.do",
+            body: params
+        }, function(e,r,b){
+            if(e) return callback(new Error("Request failed."), false);
+            if(r.statusCode == 200)
+            {
+                self.service.setCharacteristic(Characteristic.Brightness, self.currentBrightness);
+                self.lastBrightness = self.currentBrightness;
+                callback(null, self.currentBrightness);
+            }
+        });
+    }
+};
+
+RademacherDimmerAccessory.prototype.getServices = function () {
+    return [this.service];
+};
 
 function reversePercentage(p) {
     var min = 0;
