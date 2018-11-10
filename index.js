@@ -468,8 +468,8 @@ RademacherDimmerAccessory.prototype.getStatus = function (callback) {
     this.log("%s - Getting current state for %s", this.accessory.displayName, this.accessory.UUID);
 
     var self = this;
-    var serial = this.sw.serial;
-    var name = this.sw.name;
+    var serial = this.dimmer.serial;
+    var name = this.dimmer.name;
 
     request.get({
         timeout: 1500,
