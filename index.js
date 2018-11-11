@@ -491,10 +491,10 @@ RademacherDimmerAccessory.prototype.getStatus = function (callback) {
 RademacherDimmerAccessory.prototype.setStatus = function (status, callback, context) {
     if (context !== 'fromSetValue') {
         this.on = status;
-        this.log("%s - Setting switch: %s", this.accessory.displayName, value);
+        this.log("%s - Setting switch: %s", this.accessory.displayName, status);
 
         var self = this;
-        this.currentState = value;
+        this.currentState = status;
         var changed = (this.currentState != this.lastState);
         this.log("%s - switch changed=%s", this.accessory.displayName, changed);
         if (changed)
@@ -549,7 +549,7 @@ RademacherDimmerAccessory.prototype.getBrightness = function (callback) {
 
 RademacherDimmerAccessory.prototype.setBrightness = function (brightness, callback, context) {
     if (context !== 'fromSetValue') {
-        this.log("%s - Setting target position: %s", this.accessory.displayName, value);
+        this.log("%s - Setting target brightness: %s", this.accessory.displayName, brightness);
         var self = this;
         this.currentBrightness = brightness;
         var moveUp = (this.currentBrightness >= this.lastBrightness);
