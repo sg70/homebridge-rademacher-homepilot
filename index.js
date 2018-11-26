@@ -174,7 +174,7 @@ RademacherHomePilot.prototype.addDimmerAccessory = function(dimmer) {
         name = dimmer.description;
     var accessory = new global.Accessory(name, UUIDGen.generate("did"+dimmer.did));
     accessory.addService(global.Service.Lightbulb, name);
-    this.accessories[accessory.UUID] = new RademacherDimmerAccessory(this.log, accessory, dimmer, this.url, this.inverted);
+    this.accessories[accessory.UUID] = new RademacherDimmerAccessory(this.log, accessory, dimmer, this.url);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
     this.log("Added dimmer: %s - %s [%s]", dimmer.name, dimmer.description, dimmer.did);
 };
