@@ -1,18 +1,21 @@
 
+var request = require("request");
+var tools = require("./tools.js");
+
 class RademacherDimmerAccessory {
     constructor(log, accessory, dimmer, url, inverted) {
         var self = this;
 
-        var info = accessory.getService(Service.AccessoryInformation);
+        var info = accessory.getService(global.Service.AccessoryInformation);
 
         accessory.context.manufacturer = "Rademacher";
-        info.setCharacteristic(Characteristic.Manufacturer, accessory.context.manufacturer.toString());
+        info.setCharacteristic(global.Characteristic.Manufacturer, accessory.context.manufacturer.toString());
 
         accessory.context.model = dimmer.productName;
-        info.setCharacteristic(Characteristic.Model, accessory.context.model.toString());
+        info.setCharacteristic(global.Characteristic.Model, accessory.context.model.toString());
 
         accessory.context.serial = dimmer.serial;
-        info.setCharacteristic(Characteristic.SerialNumber, accessory.context.serial.toString());
+        info.setCharacteristic(global.Characteristic.SerialNumber, accessory.context.serial.toString());
 
         this.inverted = inverted;
         this.accessory = accessory;
@@ -23,13 +26,13 @@ class RademacherDimmerAccessory {
         this.currentBrightness = 2;
         this.currentStatus = 100;
 
-        this.service = accessory.getService(Service.Lightbulb);
+        this.service = accessory.getService(global.Service.Lightbulb);
 
-        this.service.getCharacteristic(Characteristic.On)
+        this.service.getCharacteristic(global.Characteristic.On)
             .on('get', this.getStatus.bind(this))
             .on('set', this.setStatus.bind(this));
 
-        this.service.getCharacteristic(Characteristic.Brightness)
+        this.service.getCharacteristic(global.Characteristic.Brightness)
             .on('get', this.getBrightness.bind(this))
             .on('set', this.setBrightness.bind(this));
 

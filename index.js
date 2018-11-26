@@ -7,9 +7,9 @@ var RademacherDimmerAccessory = require ('./accessories/RademacherDimmerAccessor
 var RademacherSwitchAccessory = require ('./accessories/RademacherSwitchAccessory.js');
 
 module.exports = function(homebridge) {
-    Accessory = homebridge.platformAccessory;
-    Service = homebridge.hap.Service;
-    Characteristic = homebridge.hap.Characteristic;
+    global.Accessory = homebridge.platformAccessory;
+    global.Service = homebridge.hap.Service;
+    global.Characteristic = homebridge.hap.Characteristic;
     UUIDGen = homebridge.hap.uuid;
 
     homebridge.registerPlatform("homebridge-rademacher-homepilot", "RademacherHomePilot", RademacherHomePilot, true);
@@ -50,7 +50,7 @@ function RademacherHomePilot(log, config, api) {
                             self.addBlindsAccessory(data);
                         }
                         else {
-                            self.log("Online: %s [%s]", accessory.displayName, data.did);
+                            self.log("blinds are online: %s [%s]", accessory.displayName, data.did);
                             self.accessories[uuid] = new RademacherBlindsAccessory(self.log, (accessory instanceof RademacherBlindsAccessory ? accessory.accessory : accessory), data, self.url, self.inverted);
                         }
                     }
@@ -61,7 +61,7 @@ function RademacherHomePilot(log, config, api) {
                             self.addDimmerAccessory(data);
                         }
                         else {
-                            self.log("Online: %s [%s]", accessory.displayName, data.did);
+                            self.log("dimmer is online: %s [%s]", accessory.displayName, data.did);
                             self.accessories[uuid] = new RademacherDimmerAccessory(self.log, (accessory instanceof RademacherDimmerAccessory ? accessory.accessory : accessory), data, self.url, self.inverted);
                         }
                     }
@@ -74,7 +74,7 @@ function RademacherHomePilot(log, config, api) {
                             }
                             else
                             { 
-                                self.log("Online: %s [%s]", accessory.displayName, data.did);
+                                self.log("lock is online: %s [%s]", accessory.displayName, data.did);
                                 self.accessories[uuid] = new RademacherLockAccessory(self.log, (accessory instanceof RademacherLockAccessory ? accessory.accessory : accessory), data, self.url);
                             }
                         }
@@ -84,7 +84,7 @@ function RademacherHomePilot(log, config, api) {
                             }
                             else
                             {
-                                self.log("Online: %s [%s]", accessory.displayName, data.did);
+                                self.log("switch is online: %s [%s]", accessory.displayName, data.did);
                                 self.accessories[uuid] = new RademacherSwitchAccessory(self.log, (accessory instanceof RademacherSwitchAccessory ? accessory.accessory : accessory), data, self.url);
                             }
                         }
@@ -112,10 +112,11 @@ RademacherHomePilot.prototype.addBlindsAccessory = function(blind) {
         name = blind.name;
     else
         name = blind.description;
-    var accessory = new Accessory(name, UUIDGen.generate("did"+blind.did));
-    accessory.addService(Service.WindowCovering, name);
+    var accessory = new global.Accessory(name, UUIDGen.generate("did"+blind.did));
+    accessory.addService(global.Service.WindowCovering, name);
     this.accessories[accessory.UUID] = new RademacherBlindsAccessory(this.log, accessory, blind, this.url, this.inverted);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
+    this.log("Added blinds: %s - %s [%s]", blind.name, blind.description, blind.did);
 };
 
 RademacherHomePilot.prototype.addDimmerAccessory = function(dimmer) {
@@ -126,10 +127,11 @@ RademacherHomePilot.prototype.addDimmerAccessory = function(dimmer) {
         name = dimmer.name;
     else
         name = dimmer.description;
-    var accessory = new Accessory(name, UUIDGen.generate("did"+dimmer.did));
-    accessory.addService(Service.Lightbulb, name);
+    var accessory = new global.Accessory(name, UUIDGen.generate("did"+dimmer.did));
+    accessory.addService(global.Service.Lightbulb, name);
     this.accessories[accessory.UUID] = new RademacherDimmerAccessory(this.log, accessory, dimmer, this.url, this.inverted);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
+    this.log("Added dimmer: %s - %s [%s]", dimmer.name, dimmer.description, dimmer.did);
 };
 
 RademacherHomePilot.prototype.addSwitchAccessory = function(sw) {
@@ -140,10 +142,11 @@ RademacherHomePilot.prototype.addSwitchAccessory = function(sw) {
         name = sw.name;
     else
         name = sw.description;
-    var accessory = new Accessory(name, UUIDGen.generate("did"+sw.did));
-    accessory.addService(Service.Switch, name);
+    var accessory = new global.Accessory(name, UUIDGen.generate("did"+sw.did));
+    accessory.addService(global.Service.Switch, name);
     this.accessories[accessory.UUID] = new RademacherSwitchAccessory(this.log, accessory, sw, this.url);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
+    this.log("Added switch: %s - %s [%s]", sw.name, sw.description, sw.did);
 };
 
 RademacherHomePilot.prototype.addLockAccessory = function(sw) {
@@ -154,10 +157,11 @@ RademacherHomePilot.prototype.addLockAccessory = function(sw) {
         name = sw.name;
     else
         name = sw.description;
-    var accessory = new Accessory(name, UUIDGen.generate("did"+sw.did));
-    accessory.addService(Service.LockMechanism, name);
+    var accessory = new global.Accessory(name, UUIDGen.generate("did"+sw.did));
+    accessory.addService(global.Service.LockMechanism, name);
     this.accessories[accessory.UUID] = new RademacherLockAccessory(this.log, accessory, sw, this.url);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
+    this.log("Added lock: %s - %s [%s]", sw.name, sw.description, sw.did);
 };
 
 RademacherHomePilot.prototype.removeAccessory = function(accessory) {
@@ -170,8 +174,3 @@ RademacherHomePilot.prototype.removeAccessory = function(accessory) {
     }
 };
 
-function reversePercentage(p) {
-    var min = 0;
-    var max = 100;
-    return (min + max) - p;
-}
