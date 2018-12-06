@@ -43,7 +43,7 @@ function RademacherHomePilot(log, config, api) {
                     var accessory = self.accessories[uuid];
                     
                     // blinds
-                    if(data.productName.includes("RolloTron") || data.productName.includes("Troll Comfort") ||
+                    if(data.productName.includes("RolloTron") || data.productName.includes("Troll ") ||
                        data.productName.includes("Rohrmotor") || data.productName.includes("Connect-Aktor") ||
                        data.productName.includes("RolloTube"))
                     {
