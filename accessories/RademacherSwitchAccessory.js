@@ -38,7 +38,7 @@ RademacherSwitchAccessory.prototype.getCurrentState = function(callback) {
 
     var self = this;
     var serial = this.sw.serial;
-    var name = this.sw.name;
+    var did = this.sw.did;
 
     request.get({
         timeout: 1500,
@@ -48,7 +48,7 @@ RademacherSwitchAccessory.prototype.getCurrentState = function(callback) {
         if(e) return callback(new Error("Request failed: "+e), false);
         var body = JSON.parse(b);
         body.devices.forEach(function(data) {
-            if(data.serial == serial && data.name == name)
+            if(data.did == did)
             {
                 var pos = data.position;
                 callback(null, (pos==100?true:false));

@@ -43,7 +43,7 @@ RademacherDimmerAccessory.prototype.getStatus = function(callback) {
 
     var self = this;
     var serial = this.dimmer.serial;
-    var name = this.dimmer.name;
+    var did = this.dimmer.did;
 
     request.get({
         timeout: 1500,
@@ -53,7 +53,7 @@ RademacherDimmerAccessory.prototype.getStatus = function(callback) {
         if(e) return callback(new Error("Request failed: "+e), false);
         var body = JSON.parse(b);
         body.devices.forEach(function(data) {
-            if(data.serial == serial && data.name == name)
+            if(data.did == did)
             {
                 var pos = data.position;
                 callback(null, (pos>0?true:false));
