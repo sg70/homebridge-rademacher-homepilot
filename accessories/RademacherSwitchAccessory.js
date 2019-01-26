@@ -1,63 +1,39 @@
 var request = require("request");
 var tools = require("./tools.js");
+var RademacherAccessory = require("./RademacherAccessory.js");
 
 function RademacherSwitchAccessory(log, accessory, sw, url) {
-    var self = this;
+    RademacherAccessory.call(this, log, accessory, sw, url);
 
-    var info = accessory.getService(global.Service.AccessoryInformation);
-
-    accessory.context.manufacturer = "Rademacher";
-    info.setCharacteristic(Characteristic.Manufacturer, accessory.context.manufacturer.toString());
-
-    accessory.context.model = sw.productName;
-    info.setCharacteristic(global.Characteristic.Model, accessory.context.model.toString());
-
-    accessory.context.serial = sw.serial;
-    info.setCharacteristic(global.Characteristic.SerialNumber, accessory.context.serial.toString());
-
-    this.accessory = accessory;
     this.sw = sw;
-    this.log = log;
-    this.url = url;
     this.lastState = this.sw.position==100?true:false;
     this.currentState = this.sw.position==100?true:false;
 
-    this.service = accessory.getService(global.Service.Switch);
+    this.service = this.accessory.getService(global.Service.Switch);
 
     this.service
         .getCharacteristic(global.Characteristic.On)
-        .setValue(self.sw.position==100?true:false)
+        .setValue(this.sw.position==100?true:false)
         .on('set', this.setCurrentState.bind(this))
         .on('get', this.getCurrentState.bind(this));
 
-    accessory.updateReachability(true);
+    this.accessory.updateReachability(true);
 }
+
+RademacherSwitchAccessory.prototype = Object.create(RademacherAccessory.prototype);
 
 RademacherSwitchAccessory.prototype.getCurrentState = function(callback) {
     this.log("%s - Getting current state for %s", this.accessory.displayName, this.accessory.UUID);
 
     var self = this;
-    var serial = this.sw.serial;
-    var did = this.sw.did;
-
-    request.get({
-        timeout: 1500,
-        strictSSL: false,
-        url: this.url + "/deviceajax.do?devices=1"
-    }, function(e,r,b) {
-        if(e) return callback(new Error("Request failed: "+e), false);
-        var body = JSON.parse(b);
-        body.devices.forEach(function(data) {
-            if(data.did == did)
-            {
-                var pos = data.position;
-                callback(null, (pos==100?true:false));
-            }
-        });
+    this.getDevice(function(e, d) {
+        if(e) return callback(e, false);
+        var pos = d.position;
+        callback(null, (pos==100?true:false));
     });
 };
 
-RademacherSwitchAccessory.prototype.setCurrentState =function(value, callback) {
+RademacherSwitchAccessory.prototype.setCurrentState = function(value, callback) {
     this.log("%s - Setting switch: %s", this.accessory.displayName, value);
 
     var self = this;
@@ -66,7 +42,7 @@ RademacherSwitchAccessory.prototype.setCurrentState =function(value, callback) {
     this.log("%s - switch changed=%s", this.accessory.displayName, changed);
     if (changed)
     {
-    var params = "cid="+(this.currentState?"10":"11")+"&did="+this.sw.did+"&command=1";
+    var params = "cid="+(this.currentState?"10":"11")+"&did="+this.did+"&command=1";
     request.post({
         headers: {'content-type' : 'application/x-www-form-urlencoded'},
         url: this.url + "/deviceajax.do",

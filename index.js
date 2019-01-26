@@ -6,6 +6,7 @@ var RademacherLockAccessory = require('./accessories/RademacherLockAccessory.js'
 var RademacherDimmerAccessory = require ('./accessories/RademacherDimmerAccessory.js');
 var RademacherSwitchAccessory = require ('./accessories/RademacherSwitchAccessory.js');
 var RademacherSmokeAlarmAccessory = require ('./accessories/RademacherSmokeAlarmAccessory.js');
+var RademacherEnvironmentSensorAccessory = require ('./accessories/RademacherEnvironmentSensorAccessory.js');
 
 module.exports = function(homebridge) {
     global.Accessory = homebridge.platformAccessory;
@@ -90,6 +91,11 @@ function RademacherHomePilot(log, config, api) {
                             }
                         }
                     }
+                    // enviroment sensor
+                    else if(data.productName.includes("Umweltsensor"))
+                    {
+                        self.addEnvironmentSensorAccessory(accessory, data);
+                    }
                     // unknown
                     else
                     {
@@ -108,7 +114,7 @@ function RademacherHomePilot(log, config, api) {
                     var uuid = UUIDGen.generate("did"+data.did);
                     var accessory = self.accessories[uuid];
                     
-                    // blinds
+                    // smoke alarm
                     if(data.productName.includes("Rauchwarnmelder"))
                     {
                         if (accessory === undefined) {
@@ -118,6 +124,10 @@ function RademacherHomePilot(log, config, api) {
                             self.log("smoke alarm is online: %s [%s]", accessory.displayName, data.did);
                             self.accessories[uuid] = new RademacherSmokeAlarmAccessory(self.log, (accessory instanceof RademacherSmokeAlarmAccessory ? accessory.accessory : accessory), data, self.url);
                         }
+                    }
+                    else if(data.productName.includes("Umweltsensor"))
+                    {
+                        self.addEnvironmentSensorAccessory(accessory, data);
                     }
                     // unknown
                     else
@@ -162,6 +172,40 @@ RademacherHomePilot.prototype.addSmokeAlarmAccessory = function(sensor) {
     this.accessories[accessory.UUID] = new RademacherSmokeAlarmAccessory(this.log, accessory, sensor, this.url);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
     this.log("Added smoke alarm: %s - %s [%s]", sensor.name, sensor.description, sensor.did);
+};
+
+RademacherHomePilot.prototype.addEnvironmentSensorAccessory = function(accessoryIn, sensor) {
+    this.log("Found environment sensor: %s - %s [%s]", sensor.name, sensor.description, sensor.did);
+
+    var name = null;
+    if(!sensor.description.trim())
+        name = sensor.name;
+    else
+        name = sensor.description;
+
+    var accessory = null
+    if (accessoryIn === undefined)
+    {
+        this.log("Found environment sensor: new accessory")
+        accessory = new global.Accessory(name, UUIDGen.generate("did"+sensor.did));
+        accessory.addService(global.Service.WindowCovering, name);
+        accessory.addService(global.Service.TemperatureSensor, name);
+        accessory.addService(global.Service.LightSensor, name);
+        this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
+    }
+    else if (accessoryIn instanceof RademacherEnvironmentSensorAccessory)
+    {
+        accessory = accessoryIn.accessory;
+    }
+    else
+    {
+        accessory = accessoryIn
+    }
+    if (!(this.accessories[accessory.UUID] instanceof RademacherEnvironmentSensorAccessory))
+    {
+        this.accessories[accessory.UUID] = new RademacherEnvironmentSensorAccessory(this.log, accessory, sensor, this.url, this.inverted);
+    }
+    this.log("Added environment sensor: %s - %s [%s]", sensor.name, sensor.description, sensor.did);
 };
 
 RademacherHomePilot.prototype.addDimmerAccessory = function(dimmer) {
