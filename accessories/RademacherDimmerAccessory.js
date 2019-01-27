@@ -1,30 +1,18 @@
 
 var request = require("request");
 var tools = require("./tools.js");
+var RademacherAccessory = require("./RademacherAccessory.js");
 
 function RademacherDimmerAccessory(log, accessory, dimmer, url) {
+    RademacherAccessory.call(this, log, accessory, dimmer, url);
     var self = this;
 
-    var info = accessory.getService(global.Service.AccessoryInformation);
-
-    accessory.context.manufacturer = "Rademacher";
-    info.setCharacteristic(global.Characteristic.Manufacturer, accessory.context.manufacturer.toString());
-
-    accessory.context.model = dimmer.productName;
-    info.setCharacteristic(global.Characteristic.Model, accessory.context.model.toString());
-
-    accessory.context.serial = dimmer.serial;
-    info.setCharacteristic(global.Characteristic.SerialNumber, accessory.context.serial.toString());
-
-    this.accessory = accessory;
     this.dimmer = dimmer;
-    this.log = log;
-    this.url = url;
     this.lastBrightness = this.dimmer.brightness;
     this.currentBrightness = 2;
     this.currentStatus = 100;
 
-    this.service = accessory.getService(global.Service.Lightbulb);
+    this.service = this.accessory.getService(global.Service.Lightbulb);
 
     this.service.getCharacteristic(global.Characteristic.On)
         .on('get', this.getStatus.bind(this))
@@ -34,35 +22,24 @@ function RademacherDimmerAccessory(log, accessory, dimmer, url) {
         .on('get', this.getBrightness.bind(this))
         .on('set', this.setBrightness.bind(this));
 
-    accessory.updateReachability(true);
+    this.accessory.updateReachability(true);
 }
 
+RademacherDimmerAccessory.prototype = Object.create(RademacherAccessory.prototype);
 
 RademacherDimmerAccessory.prototype.getStatus = function(callback) {
     this.log("%s - Getting current state for %s", this.accessory.displayName, this.accessory.UUID);
 
     var self = this;
-    var serial = this.dimmer.serial;
-    var did = this.dimmer.did;
 
-    request.get({
-        timeout: 1500,
-        strictSSL: false,
-        url: this.url + "/deviceajax.do?devices=1"
-    }, function(e,r,b) {
-        if(e) return callback(new Error("Request failed: "+e), false);
-        var body = JSON.parse(b);
-        body.devices.forEach(function(data) {
-            if(data.did == did)
-            {
-                var pos = data.position;
-                callback(null, (pos>0?true:false));
-            }
-        });
+    this.getDevice(function(e, d) {
+        if(e) return callback(e, false);
+        var pos = d.position;
+        callback(null, (pos>0?true:false));
     });
 };
 
-RademacherDimmerAccessory.prototype.setStatus = function (status, callback, context) {
+RademacherDimmerAccessory.prototype.setStatus = function(status, callback, context) {
     if (context) {
         this.on = status;
         this.log("%s - Setting dimmer: %s", this.accessory.displayName, status);
@@ -98,26 +75,14 @@ RademacherDimmerAccessory.prototype.setStatus = function (status, callback, cont
     }
 };
 
-RademacherDimmerAccessory.prototype.getBrightness = function (callback) {
+RademacherDimmerAccessory.prototype.getBrightness = function(callback) {
     this.log("%s - Getting current brightness", this.accessory.displayName);
 
     var self = this;
-    var did = this.dimmer.did;
-
-    request.get({
-        timeout: 2500,
-        strictSSL: false,
-        url: this.url + "/deviceajax.do?devices=1"
-    }, function(e,r,b) {
-        if(e) return callback(new Error("Request failed: "+e), false);
-        var body = JSON.parse(b);
-        body.devices.forEach(function(data) {
-            if(data.did == did)
-            {
-                var pos = data.position;
-                callback(null, pos);
-            }
-        });
+    this.getDevice(function(e, d) {
+        if(e) return callback(e, false);
+        var pos = d.position;
+        callback(null, pos);
     });
 };
 
@@ -147,7 +112,7 @@ RademacherDimmerAccessory.prototype.setBrightness = function(brightness, callbac
     }
 };
 
-RademacherDimmerAccessory.prototype.getServices =function() {
+RademacherDimmerAccessory.prototype.getServices = function() {
     return [this.service];
 };
 

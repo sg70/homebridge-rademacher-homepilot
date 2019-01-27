@@ -1,36 +1,26 @@
 var request = require("request");
 var tools = require("./tools.js");
+var RademacherAccessory = require("./RademacherAccessory.js");
 
 function RademacherSmokeAlarmAccessory(log, accessory, sensor, url) {
-    var self = this;
+    RademacherAccessory.call(this, log, accessory, sensor, url);
 
-    var info = accessory.getService(global.Service.AccessoryInformation);
-
-    accessory.context.manufacturer = "Rademacher";
-    info.setCharacteristic(global.Characteristic.Manufacturer, accessory.context.manufacturer.toString());
-
-    accessory.context.model = sensor.productName;
-    info.setCharacteristic(global.Characteristic.Model, accessory.context.model.toString());
-
-    accessory.context.serial = sensor.serial;
-    info.setCharacteristic(global.Characteristic.SerialNumber, accessory.context.serial.toString());
-
-    this.accessory = accessory;
     this.sensor = sensor;
-    this.log = log;
-    this.url = url;
 
-    this.service = accessory.getService(global.Service.SmokeSensor);
-    this.service.getCharacteristic(global.Characteristic.SmokeDetected).on('get', this.getSmokeDetected.bind(this));
+    this.service = this.accessory.getService(global.Service.SmokeSensor);
+    this.service.getCharacteristic(global.Characteristic.SmokeDetected)
+        .on('get', this.getSmokeDetected.bind(this));
 
-    accessory.updateReachability(true);
+    this.accessory.updateReachability(true);
 }
+
+RademacherSmokeAlarmAccessory.prototype = Object.create(RademacherAccessory.prototype);
 
 RademacherSmokeAlarmAccessory.prototype.getSmokeDetected = function (callback) {
     this.log("%s - Getting smoke detected", this.accessory.displayName);
 
     var self = this;
-    var did = this.sensor.did;
+    var did = this.did;
 
     request.get({
         timeout: 2500,
