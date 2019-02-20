@@ -11,12 +11,16 @@ function RademacherEnvironmentSensorAccessory(log, accessory, sensor, url, inver
     
     // temperature sensor
     var temperatureService = this.accessory.getService(global.Service.TemperatureSensor);
-    temperatureService.getCharacteristic(global.Characteristic.CurrentTemperature).on('get', this.getCurrentTemperature.bind(this));
+    temperatureService.getCharacteristic(global.Characteristic.CurrentTemperature)
+		.setProps({minValue: -30.0, maxValue: 80.0})
+		.on('get', this.getCurrentTemperature.bind(this));
     this.services.push(temperatureService);
     
     // light sensor
     var lightService = this.accessory.getService(global.Service.LightSensor);
-    lightService.getCharacteristic(global.Characteristic.CurrentAmbientLightLevel).on('get', this.getCurrentAmbientLightLevel.bind(this));
+    lightService.getCharacteristic(global.Characteristic.CurrentAmbientLightLevel)
+		.setProps({minValue: 0, maxValue: 150000})
+		.on('get', this.getCurrentAmbientLightLevel.bind(this));
     this.services.push(lightService);
 
     this.accessory.updateReachability(true);
