@@ -8,8 +8,7 @@ function RademacherBlindsAccessory(log, accessory, blind, url, inverted) {
     this.inverted = inverted;
     this.blind = blind;
     this.lastPosition = this.inverted ? tools.reversePercentage(this.blind.position) : this.blind.position;
-    this.currentPositionState = 2;
-    this.currentTargetPosition = 100;
+    this.currentTargetPosition = this.blind.position;
 
     this.service = this.accessory.getService(global.Service.WindowCovering);
 
@@ -25,11 +24,11 @@ function RademacherBlindsAccessory(log, accessory, blind, url, inverted) {
         .on('set', this.setTargetPosition.bind(this));
 
     this.service.getCharacteristic(global.Characteristic.PositionState)
-        .setValue(this.currentPositionState)
+        .setValue(global.Characteristic.PositionState.STOPPED)
         .on('get', this.getPositionState.bind(this));
 
     this.service.getCharacteristic(Characteristic.ObstructionDetected)
-        .setValue(this.obstructionDetected)
+        .setValue(this.blind.hasErrors)
         .on('get', this.getObstructionDetected.bind(this));
 
     this.accessory.updateReachability(true);
@@ -43,7 +42,8 @@ RademacherBlindsAccessory.prototype.setTargetPosition = function(value, callback
     var self = this;
     this.currentTargetPosition = value;
     var moveUp = (this.currentTargetPosition >= this.lastPosition);
-    this.service.setCharacteristic(global.Characteristic.PositionState, (moveUp ? 1 : 0));
+    this.service.setCharacteristic(global.Characteristic.PositionState,
+        (moveUp ? global.Characteristic.PositionState.INCREASING : global.Characteristic.PositionState.DECREASING));
     var target = self.inverted ? tools.reversePercentage(value) : value;
 
     var params = "cid=9&did="+this.blind.did+"&command=1&goto="+ target;
@@ -56,7 +56,7 @@ RademacherBlindsAccessory.prototype.setTargetPosition = function(value, callback
         if(r.statusCode == 200)
         {
             self.service.setCharacteristic(global.Characteristic.CurrentPosition, self.currentTargetPosition);
-            self.service.setCharacteristic(global.Characteristic.PositionState, 2);
+            self.service.setCharacteristic(global.Characteristic.PositionState, global.Characteristic.PositionState.STOPPED);
             self.lastPosition = self.currentTargetPosition;
             callback(null, self.currentTargetPosition);
         }
@@ -89,7 +89,7 @@ RademacherBlindsAccessory.prototype.getCurrentPosition = function(callback) {
 };
 
 RademacherBlindsAccessory.prototype.getPositionState = function(callback) {
-    callback(null, this.currentPositionState);
+    callback(null, global.Characteristic.PositionState.STOPPED);
 };
 
 RademacherBlindsAccessory.prototype.getObstructionDetected = function(callback) {
