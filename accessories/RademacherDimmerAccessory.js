@@ -23,6 +23,9 @@ function RademacherDimmerAccessory(log, accessory, dimmer, url) {
         .on('set', this.setBrightness.bind(this));
 
     this.accessory.updateReachability(true);
+
+    // TODO configure interval
+    setInterval(this.update.bind(this), 60000);
 }
 
 RademacherDimmerAccessory.prototype = Object.create(RademacherAccessory.prototype);
@@ -110,6 +113,23 @@ RademacherDimmerAccessory.prototype.setBrightness = function(brightness, callbac
             }
         });
     }
+};
+
+RademacherDimmerAccessory.prototype.update = function() {
+    this.log(`Updating %s`, this.accessory.displayName);
+    var self = this;
+
+    // Status
+    this.getStatus(function(foo, state) {
+        self.service.getCharacteristic(Characteristic.On).setValue(state, undefined, self.accessory.context);
+    }.bind(this));
+
+    // Brightness
+    this.getBrightness(function(foo, brightness) {
+        self.service.getCharacteristic(Characteristic.Brightness).setValue(brightness, undefined, self.accessory.context);
+    }.bind(this));
+
+
 };
 
 RademacherDimmerAccessory.prototype.getServices = function() {

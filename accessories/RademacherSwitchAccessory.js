@@ -18,6 +18,9 @@ function RademacherSwitchAccessory(log, accessory, sw, url) {
         .on('get', this.getCurrentState.bind(this));
 
     this.accessory.updateReachability(true);
+
+    // TODO configure interval
+    setInterval(this.update.bind(this), 60000);
 }
 
 RademacherSwitchAccessory.prototype = Object.create(RademacherAccessory.prototype);
@@ -64,6 +67,16 @@ RademacherSwitchAccessory.prototype.setCurrentState = function(value, callback) 
     {
         return callback(null,this.currentState);
     }
+};
+
+RademacherSwitchAccessory.prototype.update = function() {
+    this.log(`Updating %s`, this.accessory.displayName);
+    var self = this;
+
+    // Switch state
+    this.getCurrentState(function(foo, state) {
+        self.service.getCharacteristic(Characteristic.On).setValue(state, undefined, self.accessory.context);
+    }.bind(this));
 };
 
 module.exports = RademacherSwitchAccessory;
