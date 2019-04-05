@@ -7,6 +7,7 @@ var RademacherDimmerAccessory = require ('./accessories/RademacherDimmerAccessor
 var RademacherSwitchAccessory = require ('./accessories/RademacherSwitchAccessory.js');
 var RademacherSmokeAlarmAccessory = require ('./accessories/RademacherSmokeAlarmAccessory.js');
 var RademacherEnvironmentSensorAccessory = require ('./accessories/RademacherEnvironmentSensorAccessory.js');
+var RademacherThermostatAccessory = require('./accessories/RademacherThermostatAccessory.js');
 
 module.exports = function(homebridge) {
     global.Accessory = homebridge.platformAccessory;
@@ -65,6 +66,17 @@ function RademacherHomePilot(log, config, api) {
                         else {
                             self.log("dimmer is online: %s [%s]", accessory.displayName, data.did);
                             self.accessories[uuid] = new RademacherDimmerAccessory(self.log, (accessory instanceof RademacherDimmerAccessory ? accessory.accessory : accessory), data, self.url, self.inverted);
+                        }
+                    }
+                    // thermostat
+                    else if(data.productName.includes("rperstellantrieb"))
+                    {
+                        if (accessory === undefined) {
+                            self.addThermostatAccessory(data);
+                        }
+                        else {
+                            self.log("thermostat is online: %s [%s]", accessory.displayName, data.did);
+                            self.accessories[uuid] = new RademacherThermostatAccessory(self.log, (accessory instanceof RademacherThermostatAccessory ? accessory.accessory : accessory), data, self.url, self.inverted);
                         }
                     }
                     // lock/switch
@@ -221,6 +233,21 @@ RademacherHomePilot.prototype.addDimmerAccessory = function(dimmer) {
     this.accessories[accessory.UUID] = new RademacherDimmerAccessory(this.log, accessory, dimmer, this.url);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
     this.log("Added dimmer: %s - %s [%s]", dimmer.name, dimmer.description, dimmer.did);
+};
+
+RademacherHomePilot.prototype.addThermostatAccessory = function(thermostat) {
+    this.log("Found thermostat: %s - %s [%s]", thermostat.name, thermostat.description, thermostat.did);
+
+    var name = null;
+    if(!thermostat.description.trim())
+        name = thermostat.name;
+    else
+        name = thermostat.description;
+    var accessory = new global.Accessory(name, UUIDGen.generate("did"+thermostat.did));
+    accessory.addService(global.Service.Thermostat, name);
+    this.accessories[accessory.UUID] = new RademacherThermostatAccessory(this.log, accessory, thermostat, this.url);
+    this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
+    this.log("Added thermostat: %s - %s [%s]", thermostat.name, thermostat.description, thermostat.did);
 };
 
 RademacherHomePilot.prototype.addSwitchAccessory = function(sw) {
