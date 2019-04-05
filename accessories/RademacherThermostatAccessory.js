@@ -7,107 +7,130 @@ function RademacherThermostatAccessory(log, accessory, thermostat, url) {
     var self = this;
 
     this.thermostat = thermostat;
-    this.lastTemperature = this.thermostat.temperature;
-    this.currentTemperature = 20;
-    this.currentStatus = 100;
+    this.lastTemperature = this.thermostat.position/10;
+    this.currentTemperature = this.thermostat.position/10;
+    this.targetTemperature = this.thermostat.position/10;
+    this.currentState = global.Characteristic.CurrentHeatingCoolingState.HEAT;
 
     this.service = this.accessory.getService(global.Service.Thermostat);
 
-    this.service.getCharacteristic(global.Characteristic.On)
-        .on('get', this.getStatus.bind(this))
-        .on('set', this.setStatus.bind(this));
+    this.service.getCharacteristic(global.Characteristic.CurrentHeatingCoolingState)
+        .on('get', this.getCurrentHeatingCoolingState.bind(this));
 
-    this.service.getCharacteristic(global.Characteristic.Brightness)
-        .on('get', this.getBrightness.bind(this))
-        .on('set', this.setBrightness.bind(this));
+    this.service.getCharacteristic(global.Characteristic.TargetHeatingCoolingState)
+        .on('get', this.getTargetHeatingCoolingState.bind(this))
+        .on('set', this.setTargetHeatingCoolingState.bind(this));
+
+    this.service.getCharacteristic(global.Characteristic.CurrentTemperature)
+        .on('get', this.getCurrentTemperature.bind(this));
+
+    this.service.getCharacteristic(global.Characteristic.TargetTemperature)
+        .on('get', this.getTargetTemperature.bind(this))
+        .on('set', this.setTargetTemperature.bind(this));
 
     this.accessory.updateReachability(true);
 }
 
 RademacherThermostatAccessory.prototype = Object.create(RademacherAccessory.prototype);
 
-RademacherThermostatAccessory.prototype.getStatus = function(callback) {
+RademacherThermostatAccessory.prototype.getCurrentHeatingCoolingState = function(callback) {
     this.log("%s - Getting current state for %s", this.accessory.displayName, this.accessory.UUID);
+    this.log("%s - current state for %s is %s", this.accessory.displayName, this.accessory.UUID, this.currentState);
+    callback(null, this.currentState);
 
-    var self = this;
+/*    var self = this;
 
-    this.getDevice(function(e, d) {
-        if(e) return callback(e, false);
-        var pos = d.position;
-        callback(null, (pos>0?true:false));
-    });
-};
-
-RademacherThermostatAccessory.prototype.setStatus = function(status, callback, context) {
-    if (context) {
-        this.on = status;
-        this.log("%s - Setting dimmer: %s", this.accessory.displayName, status);
-
-        var self = this;
-        this.currentState = status;
-        var changed = (this.currentState != this.lastState);
-        this.log("%s - dimmer changed=%s", this.accessory.displayName, changed);
-        if (changed)
-        {
-        var params = "cid="+(this.currentState?"10":"11")+"&did="+this.dimmer.did+"&command=1";
-        request.post({
-            headers: {'content-type' : 'application/x-www-form-urlencoded'},
-            url: this.url + "/deviceajax.do",
-            body: params
-        }, function(e,r,b){
-                if(e) return callback(new Error("Request failed."), self.currentState);
-                if(r.statusCode == 200)
-                {
-                    self.lastState = self.currentState;
-                    return callback(null, self.currentState);
-                }
-                else
-                {
-                    return callback(new Error("Request failed with status "+r.statusCode), self.currentState);
-                }
-            });
-        }
-        else
-        {
-            return callback(null,this.currentState);
-        }
-    }
-};
-
-RademacherDimmerAccessory.prototype.getBrightness = function(callback) {
-    this.log("%s - Getting current brightness", this.accessory.displayName);
-
-    var self = this;
     this.getDevice(function(e, d) {
         if(e) return callback(e, false);
         var pos = d.position;
         callback(null, pos);
     });
+*/
 };
 
-RademacherThermostatAccessory.prototype.setBrightness = function(brightness, callback, context) {
+RademacherThermostatAccessory.prototype.getCurrentTemperature = function(callback) {
+    this.log("%s - Getting current temperature for %s", this.accessory.displayName, this.accessory.UUID);
+    var self = this;
+    this.getDevice(function(e, d) {
+        if(e) return callback(e, false);
+        var pos = d.position/10;
+        self.log("%s - current temperature for %s is %d", self.accessory.displayName, self.accessory.UUID,pos);
+        callback(null, pos);
+    });
+};
+
+RademacherThermostatAccessory.prototype.getTargetTemperature = function(callback) {
+    this.log("%s - Getting target temperature for %s", this.accessory.displayName, this.accessory.UUID);
+    callback(null, this.targetTemperature);
+};
+
+RademacherThermostatAccessory.prototype.setTargetTemperature = function(temperature, callback, context) {
     if (context) {
-        this.log("%s - Setting target brightness: %s", this.accessory.displayName, brightness);
+        this.log("%s - Setting target temperature to %d", this.accessory.displayName, temperature);
+
         var self = this;
-        this.currentBrightness = brightness;
-        var moveUp = (this.currentBrightness >= this.lastBrightness);
-        this.service.setCharacteristic(Characteristic.Brightness, (moveUp ? 1 : 0));
-        var target = brightness;
-    
-        var params = "cid=9&did="+this.dimmer.did+"&command=1&goto="+ target;
+        this.targetTemperature=temperature;
+        var params = "cid=9&did="+this.thermostat.did+"&command=1&goto="+this.targetTemperature*10;
         request.post({
             headers: {'content-type' : 'application/x-www-form-urlencoded'},
             url: this.url + "/deviceajax.do",
             body: params
-        }, function(e,r,b){
-            if(e) return callback(new Error("Request failed."), false);
-            if(r.statusCode == 200)
-            {
-                self.service.setCharacteristic(Characteristic.Brightness, self.currentBrightness);
-                self.lastBrightness = self.currentBrightness;
-                callback(null, self.currentBrightness);
-            }
-        });
+            }, function(e,r,b){
+                    if(e) return callback(new Error("Request failed."), self.targetTemperature);
+                    if(r.statusCode == 200)
+                    {
+                        return callback(null, self.targetTemperature);
+                    }
+                    else
+                    {
+                        return callback(new Error("Request failed with status "+r.statusCode), self.targetTemperature);
+                    }
+                });
+    }
+};
+
+RademacherThermostatAccessory.prototype.getTargetHeatingCoolingState = function(callback) {
+    this.log("%s - Getting target state", this.accessory.displayName);
+    return callback(null, this.currentState);
+};
+
+RademacherThermostatAccessory.prototype.setTargetHeatingCoolingState = function(status, callback, context) {
+    if (context) {
+        this.log("%s - Setting target state to %d", this.accessory.displayName, status);
+        return callback(null, this.currentState);
+/*
+        this.on = status;
+        this.log("%s - Setting thermostat: %s", this.accessory.displayName, status);
+
+        var self = this;
+        this.currentState = status;
+        var changed = (this.currentState != this.lastState);
+        this.log("%s - thermostat changed=%s", this.accessory.displayName, changed);
+        if (changed)
+        {
+          var params = "cid="+(this.currentState?"10":"11")+"&did="+this.thermostat.did+"&command=1";
+          request.post({
+            headers: {'content-type' : 'application/x-www-form-urlencoded'},
+            url: this.url + "/deviceajax.do",
+            body: params
+            }, function(e,r,b){
+                    if(e) return callback(new Error("Request failed."), self.currentState);
+                    if(r.statusCode == 200)
+                    {
+                        self.lastState = self.currentState;
+                        return callback(null, self.currentState);
+                    }
+                    else
+                    {
+                        return callback(new Error("Request failed with status "+r.statusCode), self.currentState);
+                    }
+                });
+        }
+        else
+        {
+            return callback(null,this.currentState);
+        }
+    */
     }
 };
 
