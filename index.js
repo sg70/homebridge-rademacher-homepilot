@@ -69,7 +69,7 @@ function RademacherHomePilot(log, config, api) {
                         }
                     }
                     // thermostat
-                    else if(data.productName.includes("rperstellantrieb"))
+                    else if(data.productName.includes("rperstellantrieb") || data.productName.includes("Actionneur pour radiateur"))
                     {
                         if (accessory === undefined) {
                             self.addThermostatAccessory(data);
