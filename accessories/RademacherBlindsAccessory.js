@@ -7,19 +7,19 @@ function RademacherBlindsAccessory(log, accessory, blind, url, inverted) {
 
     this.inverted = inverted;
     this.blind = blind;
-    this.lastPosition = this.inverted ? tools.reversePercentage(this.blind.position) : this.blind.position;
-    this.currentTargetPosition = this.blind.position;
+    this.lastPosition = this.inverted ? tools.reversePercentage(this.blind.statusesMap.Position) : this.blind.statusesMap.Position;
+    this.currentTargetPosition = this.blind.statusesMap.Position;
 
     this.service = this.accessory.getService(global.Service.WindowCovering);
 
     this.service
         .getCharacteristic(global.Characteristic.CurrentPosition)
-        .setValue(this.inverted ? tools.reversePercentage(this.blind.position) : this.blind.position)
+        .setValue(this.inverted ? tools.reversePercentage(this.blind.statusesMap.Position) : this.blind.statusesMap.Position)
         .on('get', this.getCurrentPosition.bind(this));
 
     this.service
         .getCharacteristic(global.Characteristic.TargetPosition)
-        .setValue(this.inverted ? tools.reversePercentage(this.blind.position) : this.blind.position)
+        .setValue(this.inverted ? tools.reversePercentage(this.blind.statusesMap.Position) : this.blind.statusesMap.Position)
         .on('get', this.getTargetPosition.bind(this))
         .on('set', this.setTargetPosition.bind(this));
 
@@ -46,10 +46,10 @@ RademacherBlindsAccessory.prototype.setTargetPosition = function(value, callback
         (moveUp ? global.Characteristic.PositionState.INCREASING : global.Characteristic.PositionState.DECREASING));
     var target = self.inverted ? tools.reversePercentage(value) : value;
 
-    var params = "cid=9&did="+this.blind.did+"&command=1&goto="+ target;
-    request.post({
-        headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url: this.url + "/deviceajax.do",
+    var params = "{\"name\":\"GOTO_POS_CMD\",\"value\":"+target+"}";
+    request.put({
+        headers: {'content-type' : 'application/json'},
+        url: this.url + "/devices/"+this.blind.did,
         body: params
     }, function(e,r,b){
         if(e) return callback(new Error("Request failed."), false);
@@ -83,7 +83,7 @@ RademacherBlindsAccessory.prototype.getCurrentPosition = function(callback) {
 
     this.getDevice(function(e, d) {
         if(e) return callback(e, false);
-        var pos = self.inverted ? tools.reversePercentage(d.position) : d.position;
+        var pos = self.inverted ? tools.reversePercentage(d.statusesMap.Position) : d.statusesMap.Position;
         callback(null, pos);
     });
 };

@@ -20,14 +20,17 @@ function RademacherLockAccessory(log, accessory, sw, url) {
 }
 
 RademacherLockAccessory.prototype.getState =function (callback) {
-    this.log("Get lock state of %s", this.accessory.displayName)
+    this.log("%s [%s] - get lock state", this.accessory.displayName, this.sw.did)
     callback(null, true);
 }
 
 RademacherLockAccessory.prototype.setState = function (state, callback) {
     var self=this;
     var lockState = (state == global.Characteristic.LockTargetState.SECURED) ? "lock" : "unlock";
-    this.log("Set lock state of %s to %s", this.accessory.displayName,lockState);
+    this.log("%s [%s] - set lock state to %s", this.accessory.displayName, this.sw.did, lockState)
+
+    callback(null);
+    return; //TODO
 
     var params = "cid=10&did="+this.sw.did+"&command=1";
     request.post({

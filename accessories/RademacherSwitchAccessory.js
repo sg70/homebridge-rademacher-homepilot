@@ -6,14 +6,14 @@ function RademacherSwitchAccessory(log, accessory, sw, url) {
     RademacherAccessory.call(this, log, accessory, sw, url);
 
     this.sw = sw;
-    this.lastState = this.sw.position==100?true:false;
-    this.currentState = this.sw.position==100?true:false;
+    this.lastState = this.sw.statusesMap.Position==100?true:false;
+    this.currentState = this.sw.statusesMap.Position==100?true:false;
 
     this.service = this.accessory.getService(global.Service.Switch);
 
     this.service
         .getCharacteristic(global.Characteristic.On)
-        .setValue(this.sw.position==100?true:false)
+        .setValue(this.sw.statusesMap.Position==100?true:false)
         .on('set', this.setCurrentState.bind(this))
         .on('get', this.getCurrentState.bind(this));
 
@@ -26,42 +26,43 @@ function RademacherSwitchAccessory(log, accessory, sw, url) {
 RademacherSwitchAccessory.prototype = Object.create(RademacherAccessory.prototype);
 
 RademacherSwitchAccessory.prototype.getCurrentState = function(callback) {
-    this.log("%s - Getting current state for %s", this.accessory.displayName, this.accessory.UUID);
+    this.log("%s [%s] - getting current state", this.accessory.displayName, this.sw.did);
 
     var self = this;
     this.getDevice(function(e, d) {
         if(e) return callback(e, false);
-        var pos = d.position;
+        var pos = d?d.statusesMap.Position:0;
+        self.log("%s [%s] - current state: %s", self.accessory.displayName, self.sw.did, pos);
         callback(null, (pos==100?true:false));
     });
 };
 
 RademacherSwitchAccessory.prototype.setCurrentState = function(value, callback) {
-    this.log("%s - Setting switch: %s", this.accessory.displayName, value);
+    this.log("%s [%s] - setting switch: %s", this.accessory.displayName, this.sw.did,value);
 
     var self = this;
     this.currentState = value;
     var changed = (this.currentState != this.lastState);
-    this.log("%s - switch changed=%s", this.accessory.displayName, changed);
+    this.log("%s [%s] - switch changed=%s, lastState=%s", this.accessory.displayName, this.sw.did,changed, this.lastState);
     if (changed)
     {
-    var params = "cid="+(this.currentState?"10":"11")+"&did="+this.did+"&command=1";
-    request.post({
-        headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url: this.url + "/deviceajax.do",
-        body: params
-    }, function(e,r,b){
-            if(e) return callback(new Error("Request failed."), self.currentState);
-            if(r.statusCode == 200)
-            {
-                self.lastState = self.currentState;
-                return callback(null, self.currentState);
-            }
-            else
-            {
-                return callback(new Error("Request failed with status "+r.statusCode), self.currentState);
-            }
-        });
+        var params = "{\"name\":\""+(this.lastState?"TURN_OFF_CMD":"TURN_ON_CMD")+"\"}";
+        request.put({
+            headers: {'content-type' : 'application/json'},
+            url: this.url + "/devices/"+this.sw.did,
+            body: params
+        }, function(e,r,b){
+                if(e) return callback(new Error("Request failed."), self.currentState);
+                if(r.statusCode == 200)
+                {
+                    self.lastState = self.currentState;
+                    return callback(null, self.currentState);
+                }
+                else
+                {
+                    return callback(new Error("Request failed with status "+r.statusCode), self.currentState);
+                }
+            });
     }
     else
     {
@@ -70,11 +71,12 @@ RademacherSwitchAccessory.prototype.setCurrentState = function(value, callback) 
 };
 
 RademacherSwitchAccessory.prototype.update = function() {
-    this.log(`Updating %s`, this.accessory.displayName);
+    this.log(`%s - [%s] updating`, this.accessory.displayName, this.sw.did);
     var self = this;
 
     // Switch state
     this.getCurrentState(function(foo, state) {
+        self.log(`%s [%s] - updating to %s`, self.accessory.displayName, self.sw.did, state);
         self.service.getCharacteristic(Characteristic.On).setValue(state, undefined, self.accessory.context);
     }.bind(this));
 };

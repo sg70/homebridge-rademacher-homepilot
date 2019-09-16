@@ -36,7 +36,7 @@ function RademacherHomePilot(log, config, api) {
             request.get({
                 timeout: 1500,
                 strictSSL: false,
-                url: this.url + "/deviceajax.do?devices=1"
+                url: this.url + "/v4/devices?devtype=Actuator"
             }, function(e,r,b){
                 if(e) return new Error("Request failed.");
                 var body = JSON.parse(b);
@@ -45,9 +45,7 @@ function RademacherHomePilot(log, config, api) {
                     var accessory = self.accessories[uuid];
                     
                     // blinds
-                    if(data.productName.includes("RolloTron") || data.productName.includes("Troll ") ||
-                       data.productName.includes("Rohrmotor") || data.productName.includes("Connect-Aktor") ||
-                       data.productName.includes("RolloTube"))
+                    if(["27601565","35000864"].includes(data.deviceNumber))
                     {
                         if (accessory === undefined) {
                             self.addBlindsAccessory(data);
@@ -58,7 +56,7 @@ function RademacherHomePilot(log, config, api) {
                         }
                     }
                     // dimmer
-                    else if(data.productName.includes("Universaldimmer"))
+                    else if(["?"].includes(data.deviceNumber))
                     {
                         if (accessory === undefined) {
                             self.addDimmerAccessory(data);
@@ -69,7 +67,7 @@ function RademacherHomePilot(log, config, api) {
                         }
                     }
                     // thermostat
-                    else if(data.productName.includes("rperstellantrieb") || data.productName.includes("Actionneur pour radiateur"))
+                    else if(["35003064"].includes(data.deviceNumber))
                     {
                         if (accessory === undefined) {
                             self.addThermostatAccessory(data);
@@ -80,9 +78,9 @@ function RademacherHomePilot(log, config, api) {
                         }
                     }
                     // lock/switch
-                    else if(data.productName.includes("Schaltaktor") || data.productName.includes("Universal-Aktor"))
+                    else if(["35000262","35000662"].includes(data.deviceNumber))
                     {
-                        if (data.iconSet.name.includes("tor")){
+                        if (data.iconSet.k.includes("iconset31")){
                             if (accessory === undefined) {
                                 self.addLockAccessory(data);
                             }
@@ -104,30 +102,30 @@ function RademacherHomePilot(log, config, api) {
                         }
                     }
                     // enviroment sensor
-                    else if(data.productName.includes("Umweltsensor"))
+                    else if(["?"].includes(data.deviceNumber))
                     {
                         self.addEnvironmentSensorAccessory(accessory, data);
                     }
                     // unknown
                     else
                     {
-                       self.log("Unknown product: %s",data.productName);
+                       self.log("Unknown product: %s",data.deviceNumber);
                     }
                 });
             });
             request.get({
                 timeout: 1500,
                 strictSSL: false,
-                url: this.url + "/deviceajax.do?sensors=1"
+                url: this.url + "/v4/devices?devtype=Sensor"
             }, function(e,r,b){
                 if(e) return new Error("Request failed.");
                 var body = JSON.parse(b);
-                body.devices.forEach(function(data) {
+                body.meters.forEach(function(data) {
                     var uuid = UUIDGen.generate("did"+data.did);
                     var accessory = self.accessories[uuid];
                     
                     // smoke alarm
-                    if(data.productName.includes("Rauchwarnmelder"))
+                    if(["32001664"].includes(data.deviceNumber))
                     {
                         if (accessory === undefined) {
                             self.addSmokeAlarmAccessory(data);
@@ -137,14 +135,15 @@ function RademacherHomePilot(log, config, api) {
                             self.accessories[uuid] = new RademacherSmokeAlarmAccessory(self.log, (accessory instanceof RademacherSmokeAlarmAccessory ? accessory.accessory : accessory), data, self.url);
                         }
                     }
-                    else if(data.productName.includes("Umweltsensor"))
+                    // umweltsensor
+                    else if(["?"].includes(data.deviceNumber))
                     {
                         self.addEnvironmentSensorAccessory(accessory, data);
                     }
                     // unknown
                     else
                     {
-                       self.log("Unknown product: %s",data.productName);
+                       self.log("Unknown product: %s",data.deviceNumber);
                     }
                 });
             });
