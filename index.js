@@ -45,7 +45,7 @@ function RademacherHomePilot(log, config, api) {
                     var accessory = self.accessories[uuid];
                     
                     // blinds
-                    if(["27601565","35000864","14234511"].includes(data.deviceNumber))
+                    if(["27601565","35000864","14234511","35000662","36500172","36500572_A"].includes(data.deviceNumber))
                     {
                         if (accessory === undefined) {
                             self.addBlindsAccessory(data);
@@ -78,7 +78,7 @@ function RademacherHomePilot(log, config, api) {
                         }
                     }
                     // lock/switch
-                    else if(["35000262","35000662"].includes(data.deviceNumber))
+                    else if(["35000262"].includes(data.deviceNumber))
                     {
                         if (data.iconSet.k.includes("iconset31")){
                             if (accessory === undefined) {
