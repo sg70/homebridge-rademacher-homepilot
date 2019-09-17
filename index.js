@@ -45,7 +45,7 @@ function RademacherHomePilot(log, config, api) {
                     var accessory = self.accessories[uuid];
                     
                     // blinds
-                    if(["27601565","35000864"].includes(data.deviceNumber))
+                    if(["27601565","35000864","14234511"].includes(data.deviceNumber))
                     {
                         if (accessory === undefined) {
                             self.addBlindsAccessory(data);
