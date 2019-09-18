@@ -102,7 +102,7 @@ function RademacherHomePilot(log, config, api) {
                         }
                     }
                     // enviroment sensor
-                    else if(["32000064"].includes(data.deviceNumber))
+                    else if(["32000064","32000064_A","32000064_S"].includes(data.deviceNumber))
                     {
                         self.addEnvironmentSensorAccessory(accessory, data);
                     }
@@ -136,8 +136,8 @@ function RademacherHomePilot(log, config, api) {
                             self.accessories[uuid] = new RademacherSmokeAlarmAccessory(self.log, (accessory instanceof RademacherSmokeAlarmAccessory ? accessory.accessory : accessory), data, self.url);
                         }
                     }
-                    // umweltsensor
-                    else if(["32000064"].includes(data.deviceNumber))
+                    // environment sensor
+                    else if(["32000064","32000064_A","32000064_S"].includes(data.deviceNumber))
                     {
                         self.addEnvironmentSensorAccessory(accessory, data);
                     }

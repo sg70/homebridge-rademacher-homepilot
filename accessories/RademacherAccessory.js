@@ -7,8 +7,6 @@ function RademacherAccessory(log, accessory, data, url) {
     info.setCharacteristic(global.Characteristic.Manufacturer, accessory.context.manufacturer.toString());
     
     accessory.context.model = data.deviceNumber;
-    log(data.deviceNumber);
-    log(data);
     info.setCharacteristic(global.Characteristic.Model, accessory.context.model.toString());
     
     accessory.context.serial = data.uid;
