@@ -78,7 +78,7 @@ function RademacherHomePilot(log, config, api) {
                         }
                     }
                     // lock/switch
-                    else if(["35000262"].includes(data.deviceNumber))
+                    else if(["35000262","35001164"].includes(data.deviceNumber))
                     {
                         if (data.iconSet.k.includes("iconset31")){
                             if (accessory === undefined) {
@@ -102,7 +102,7 @@ function RademacherHomePilot(log, config, api) {
                         }
                     }
                     // enviroment sensor
-                    else if(["?"].includes(data.deviceNumber))
+                    else if(["32000064"].includes(data.deviceNumber))
                     {
                         self.addEnvironmentSensorAccessory(accessory, data);
                     }
@@ -137,7 +137,7 @@ function RademacherHomePilot(log, config, api) {
                         }
                     }
                     // umweltsensor
-                    else if(["?"].includes(data.deviceNumber))
+                    else if(["32000064"].includes(data.deviceNumber))
                     {
                         self.addEnvironmentSensorAccessory(accessory, data);
                     }
