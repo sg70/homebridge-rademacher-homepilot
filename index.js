@@ -110,6 +110,7 @@ function RademacherHomePilot(log, config, api) {
                     else
                     {
                        self.log("Unknown product: %s",data.deviceNumber);
+                       self.log(data);
                     }
                 });
             });
@@ -144,11 +145,13 @@ function RademacherHomePilot(log, config, api) {
                     else if(["32003164"].includes(data.deviceNumber))
                     {
                         self.log("Unknown product: %s (but door/window sensor coming soon...)",data.deviceNumber);
+                        self.log(data);
                     }                    
                     // unknown
                     else
                     {
                        self.log("Unknown product: %s",data.deviceNumber);
+                       self.log(data);
                     }
                 });
             });
