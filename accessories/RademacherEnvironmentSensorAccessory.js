@@ -3,7 +3,7 @@ var tools = require("./tools.js");
 var RademacherBlindsAccessory = require("./RademacherBlindsAccessory.js");
 
 function RademacherEnvironmentSensorAccessory(log, accessory, sensor, url, inverted) {
-	RademacherBlindsccessory.call(this, log, accessory, sensor, url, inverted);
+	RademacherBlindsAccessory.call(this, log, accessory, sensor, url, inverted);
 
     this.meter = null;
     this.lastMeterUpdate = 0
