@@ -108,7 +108,7 @@ RademacherThermostatAccessory.prototype.setTargetHeatingCoolingState = function(
 };
 
 RademacherThermostatAccessory.prototype.update = function() {
-    this.log(`Updating %s`, this.accessory.displayName);
+    this.log(`Updating %s [%s]`, this.accessory.displayName, this.thermostat.did);
     var self = this;
 
     // Thermostat

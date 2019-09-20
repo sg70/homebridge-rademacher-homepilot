@@ -1,9 +1,9 @@
 var request = require("request");
 var tools = require("./tools.js");
-var RademacherAccessory = require("./RademacherAccessory.js");
+var RademacherBlindsAccessory = require("./RademacherBlindsAccessory.js");
 
-function RademacherEnvironmentSensorAccessory(log, accessory, sensor, url) {
-	RademacherAccessory.call(this, log, accessory, sensor, url);
+function RademacherEnvironmentSensorAccessory(log, accessory, sensor, url, inverted) {
+	RademacherBlindsccessory.call(this, log, accessory, sensor, url, inverted);
 
     this.meter = null;
     this.lastMeterUpdate = 0
@@ -26,7 +26,7 @@ function RademacherEnvironmentSensorAccessory(log, accessory, sensor, url) {
     this.accessory.updateReachability(true);
 }
 
-RademacherEnvironmentSensorAccessory.prototype = Object.create(RademacherAccessory.prototype);
+RademacherEnvironmentSensorAccessory.prototype = Object.create(RademacherBlindsAccessory.prototype);
 
 RademacherEnvironmentSensorAccessory.prototype.getMeter = function(callback) {
     if (this.lastMeterUpdate < Date.now()) {

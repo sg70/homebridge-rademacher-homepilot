@@ -7,19 +7,29 @@ function RademacherBlindsAccessory(log, accessory, blind, url, inverted) {
 
     this.inverted = inverted;
     this.blind = blind;
-    this.lastPosition = this.inverted ? tools.reversePercentage(this.blind.statusesMap.Position) : this.blind.statusesMap.Position;
-    this.currentTargetPosition = this.blind.statusesMap.Position;
+
+    var position=0;
+    if (this.blind.hasOwnProperty("statusesMap") && this.blind.statusesMap.hasOwnProperty("Position"))
+    {
+        position=this.blind.statusesMap.Position;
+    }
+    else
+    {
+        this.log("no position in blind object %o", blind)
+    }
+    this.lastPosition = this.inverted ? tools.reversePercentage(position) : position;
+    this.currentTargetPosition = this.lastPosition;
 
     this.service = this.accessory.getService(global.Service.WindowCovering);
-
+    
     this.service
         .getCharacteristic(global.Characteristic.CurrentPosition)
-        .setValue(this.inverted ? tools.reversePercentage(this.blind.statusesMap.Position) : this.blind.statusesMap.Position)
+        .setValue(this.inverted ? tools.reversePercentage(position) : position)
         .on('get', this.getCurrentPosition.bind(this));
 
     this.service
         .getCharacteristic(global.Characteristic.TargetPosition)
-        .setValue(this.inverted ? tools.reversePercentage(this.blind.statusesMap.Position) : this.blind.statusesMap.Position)
+        .setValue(this.inverted ? tools.reversePercentage(position) : position)
         .on('get', this.getTargetPosition.bind(this))
         .on('set', this.setTargetPosition.bind(this));
 
@@ -37,7 +47,7 @@ function RademacherBlindsAccessory(log, accessory, blind, url, inverted) {
 RademacherBlindsAccessory.prototype = Object.create(RademacherAccessory.prototype);
 
 RademacherBlindsAccessory.prototype.setTargetPosition = function(value, callback) {
-    this.log("%s - Setting target position: %s", this.accessory.displayName, value);
+    this.log("%s [%s] - Setting target position: %s", this.accessory.displayName, this.blind.did, value);
 
     var self = this;
     this.currentTargetPosition = value;
@@ -64,27 +74,29 @@ RademacherBlindsAccessory.prototype.setTargetPosition = function(value, callback
 };
 
 RademacherBlindsAccessory.prototype.getTargetPosition = function(callback) {
-    this.log("%s - Getting target position", this.accessory.displayName);
-
-    var self = this;
-
-    this.getDevice(function(e, d) {
-        if(e) return callback(e, false);
-        var pos = self.inverted ? tools.reversePercentage(d.position) : d.position;
-        self.currentTargetPosition = pos;
-        callback(null, pos);
-    });
+    this.log("%s [%s] - Current target position: %s", this.accessory.displayName, this.blind.did,this.currentTargetPosition);
+    callback(null, this.currentTargetPosition);
 };
 
 RademacherBlindsAccessory.prototype.getCurrentPosition = function(callback) {
-    this.log("%s - Getting current position", this.accessory.displayName);
+    this.log("%s [%s] - Getting current position", this.accessory.displayName, this.blind.did);
 
     var self = this;
 
     this.getDevice(function(e, d) {
         if(e) return callback(e, false);
-        var pos = self.inverted ? tools.reversePercentage(d.statusesMap.Position) : d.statusesMap.Position;
-        callback(null, pos);
+        if (d.hasOwnProperty("statusesMap"))
+        {
+            var map=d.statusesMap;
+            var pos = self.inverted ? tools.reversePercentage(map.Position) : map.Position;
+            self.log("%s [%s] - current position: %s", self.accessory.displayName, self.blind.did,pos);
+            callback(null, pos);
+        }
+        else
+        {
+            self.log("%s [%s] - no current position in %o", self.accessory.displayName, self.blind.did,o);
+            callback(null, 0);
+        }
     });
 };
 
@@ -93,12 +105,21 @@ RademacherBlindsAccessory.prototype.getPositionState = function(callback) {
 };
 
 RademacherBlindsAccessory.prototype.getObstructionDetected = function(callback) {
-    this.log("%s - Getting obstruction detected", this.accessory.displayName);
+    this.log("%s [%s] - Getting obstruction detected", this.accessory.displayName, this.blind.did);
 
     var self = this;
     this.getDevice(function(e, d) {
         if(e) return callback(e, false);
-         callback(null, d.hasErrors);
+        if (d.hasOwnProperty("hasErrors"))
+        {
+            self.log("%s [%s] - obstruction detected: %s errors", self.accessory.displayName, self.blind.did, d.hasErrors);
+            callback(null, d.hasErrors>0);
+        }
+        else
+        {
+            self.log("%s [%s] - could not detect obstruction from %o", self.accessory.displayName, self.blind.did,d);
+            callback(null, false);
+        }
     });
 };
 

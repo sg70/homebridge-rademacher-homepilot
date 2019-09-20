@@ -33,10 +33,10 @@ RademacherAccessory.prototype.getDevice = function(callback) {
     	}, function(e,r,b) {
     		if(e) return callback(new Error("Request failed."), false);
             var body = JSON.parse(b);
-            if (body.device || body.meter)
+            if (body.hasOwnProperty("device") || body.hasOwnProperty("meter"))
             {
-                var device = body.device?body.device:body.meter;
-                self.device = device;
+                var device = body.hasOwnProperty("device")?body.device:body.meter;
+                self.device = device.data;
                 self.lastUpdate = Date.now();
                 callback(null, device)    
             }
