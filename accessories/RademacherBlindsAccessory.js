@@ -29,7 +29,7 @@ function RademacherBlindsAccessory(log, accessory, blind, url, inverted) {
 
     this.service
         .getCharacteristic(global.Characteristic.TargetPosition)
-        .setValue(this.inverted ? tools.reversePercentage(position) : position)
+        .setValue(this.currentTargetPosition)
         .on('get', this.getTargetPosition.bind(this))
         .on('set', this.setTargetPosition.bind(this));
 
@@ -42,6 +42,9 @@ function RademacherBlindsAccessory(log, accessory, blind, url, inverted) {
         .on('get', this.getObstructionDetected.bind(this));
 
     this.accessory.updateReachability(true);
+
+    // TODO configure interval
+    setInterval(this.update.bind(this), 60000);
 }
 
 RademacherBlindsAccessory.prototype = Object.create(RademacherAccessory.prototype);
@@ -75,7 +78,23 @@ RademacherBlindsAccessory.prototype.setTargetPosition = function(value, callback
 
 RademacherBlindsAccessory.prototype.getTargetPosition = function(callback) {
     this.log("%s [%s] - Current target position: %s", this.accessory.displayName, this.blind.did,this.currentTargetPosition);
-    callback(null, this.currentTargetPosition);
+    var self = this;
+
+    this.getDevice(function(e, d) {
+        if(e) return callback(e, false);
+        if (d.hasOwnProperty("statusesMap"))
+        {
+            var map=d.statusesMap;
+            var pos = self.inverted ? tools.reversePercentage(map.Position) : map.Position;
+            self.log("%s [%s] - current target: %s", self.accessory.displayName, self.blind.did,pos);
+            callback(null, pos);
+        }
+        else
+        {
+            self.log("%s [%s] - no current target in %o", self.accessory.displayName, self.blind.did,o);
+            callback(null, 0);
+        }
+    });
 };
 
 RademacherBlindsAccessory.prototype.getCurrentPosition = function(callback) {
@@ -121,6 +140,18 @@ RademacherBlindsAccessory.prototype.getObstructionDetected = function(callback) 
             callback(null, false);
         }
     });
+};
+
+RademacherBlindsAccessory.prototype.update = function() {
+    this.log(`%s - [%s] updating`, this.accessory.displayName, this.blind.did);
+    var self = this;
+
+    // position
+    this.getCurrentPosition(function(foo, pos) {
+        self.log(`%s [%s] - updating to %s`, self.accessory.displayName, self.blind.did, pos);
+        self.service.getCharacteristic(global.Characteristic.CurrentPosition).setValue(pos);
+        self.service.getCharacteristic(global.Characteristic.TargetPosition).setValue(pos);
+    }.bind(this));
 };
 
 module.exports = RademacherBlindsAccessory;
