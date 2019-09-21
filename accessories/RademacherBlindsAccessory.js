@@ -43,14 +43,12 @@ function RademacherBlindsAccessory(log, accessory, blind, url, inverted) {
 
     this.accessory.updateReachability(true);
 
-    // TODO configure interval
-    setInterval(this.update.bind(this), 60000);
 }
 
 RademacherBlindsAccessory.prototype = Object.create(RademacherAccessory.prototype);
 
 RademacherBlindsAccessory.prototype.setTargetPosition = function(value, callback) {
-    this.log("%s [%s] - Setting target position: %s", this.accessory.displayName, this.blind.did, value);
+    this.log("%s [%s] - setting target position: %s", this.accessory.displayName, this.blind.did, value);
 
     var self = this;
     this.currentTargetPosition = value;
@@ -98,7 +96,7 @@ RademacherBlindsAccessory.prototype.getTargetPosition = function(callback) {
 };
 
 RademacherBlindsAccessory.prototype.getCurrentPosition = function(callback) {
-    this.log("%s [%s] - Getting current position", this.accessory.displayName, this.blind.did);
+    this.log("%s [%s] - getting current position", this.accessory.displayName, this.blind.did);
 
     var self = this;
 
@@ -109,6 +107,8 @@ RademacherBlindsAccessory.prototype.getCurrentPosition = function(callback) {
             var map=d.statusesMap;
             var pos = self.inverted ? tools.reversePercentage(map.Position) : map.Position;
             self.log("%s [%s] - current position: %s", self.accessory.displayName, self.blind.did,pos);
+            self.currentTargetPosition=pos;
+            self.lastPosition=pos;
             callback(null, pos);
         }
         else
@@ -124,7 +124,7 @@ RademacherBlindsAccessory.prototype.getPositionState = function(callback) {
 };
 
 RademacherBlindsAccessory.prototype.getObstructionDetected = function(callback) {
-    this.log("%s [%s] - Getting obstruction detected", this.accessory.displayName, this.blind.did);
+    this.log("%s [%s] - getting obstruction detected", this.accessory.displayName, this.blind.did);
 
     var self = this;
     this.getDevice(function(e, d) {
@@ -140,18 +140,6 @@ RademacherBlindsAccessory.prototype.getObstructionDetected = function(callback) 
             callback(null, false);
         }
     });
-};
-
-RademacherBlindsAccessory.prototype.update = function() {
-    this.log(`%s - [%s] updating`, this.accessory.displayName, this.blind.did);
-    var self = this;
-
-    // position
-    this.getCurrentPosition(function(foo, pos) {
-        self.log(`%s [%s] - updating to %s`, self.accessory.displayName, self.blind.did, pos);
-        self.service.getCharacteristic(global.Characteristic.CurrentPosition).setValue(pos);
-        self.service.getCharacteristic(global.Characteristic.TargetPosition).setValue(pos);
-    }.bind(this));
 };
 
 module.exports = RademacherBlindsAccessory;
