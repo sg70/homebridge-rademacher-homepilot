@@ -7,19 +7,29 @@ function RademacherBlindsAccessory(log, accessory, blind, url, inverted) {
 
     this.inverted = inverted;
     this.blind = blind;
-    this.lastPosition = this.inverted ? tools.reversePercentage(this.blind.position) : this.blind.position;
-    this.currentTargetPosition = this.blind.position;
+
+    var position=0;
+    if (this.blind.hasOwnProperty("statusesMap") && this.blind.statusesMap.hasOwnProperty("Position"))
+    {
+        position=this.blind.statusesMap.Position;
+    }
+    else
+    {
+        this.log("no position in blind object %o", blind)
+    }
+    this.lastPosition = this.inverted ? tools.reversePercentage(position) : position;
+    this.currentTargetPosition = this.lastPosition;
 
     this.service = this.accessory.getService(global.Service.WindowCovering);
-
+    
     this.service
         .getCharacteristic(global.Characteristic.CurrentPosition)
-        .setValue(this.inverted ? tools.reversePercentage(this.blind.position) : this.blind.position)
+        .setValue(this.inverted ? tools.reversePercentage(position) : position)
         .on('get', this.getCurrentPosition.bind(this));
 
     this.service
         .getCharacteristic(global.Characteristic.TargetPosition)
-        .setValue(this.inverted ? tools.reversePercentage(this.blind.position) : this.blind.position)
+        .setValue(this.currentTargetPosition)
         .on('get', this.getTargetPosition.bind(this))
         .on('set', this.setTargetPosition.bind(this));
 
@@ -32,12 +42,13 @@ function RademacherBlindsAccessory(log, accessory, blind, url, inverted) {
         .on('get', this.getObstructionDetected.bind(this));
 
     this.accessory.updateReachability(true);
+
 }
 
 RademacherBlindsAccessory.prototype = Object.create(RademacherAccessory.prototype);
 
 RademacherBlindsAccessory.prototype.setTargetPosition = function(value, callback) {
-    this.log("%s - Setting target position: %s", this.accessory.displayName, value);
+    this.log("%s [%s] - setting target position: %s", this.accessory.displayName, this.blind.did, value);
 
     var self = this;
     this.currentTargetPosition = value;
@@ -46,10 +57,10 @@ RademacherBlindsAccessory.prototype.setTargetPosition = function(value, callback
         (moveUp ? global.Characteristic.PositionState.INCREASING : global.Characteristic.PositionState.DECREASING));
     var target = self.inverted ? tools.reversePercentage(value) : value;
 
-    var params = "cid=9&did="+this.blind.did+"&command=1&goto="+ target;
-    request.post({
-        headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url: this.url + "/deviceajax.do",
+    var params = "{\"name\":\"GOTO_POS_CMD\",\"value\":"+target+"}";
+    request.put({
+        headers: {'content-type' : 'application/json'},
+        url: this.url + "/devices/"+this.blind.did,
         body: params
     }, function(e,r,b){
         if(e) return callback(new Error("Request failed."), false);
@@ -64,27 +75,47 @@ RademacherBlindsAccessory.prototype.setTargetPosition = function(value, callback
 };
 
 RademacherBlindsAccessory.prototype.getTargetPosition = function(callback) {
-    this.log("%s - Getting target position", this.accessory.displayName);
-
+    this.log("%s [%s] - Current target position: %s", this.accessory.displayName, this.blind.did,this.currentTargetPosition);
     var self = this;
 
     this.getDevice(function(e, d) {
         if(e) return callback(e, false);
-        var pos = self.inverted ? tools.reversePercentage(d.position) : d.position;
-        self.currentTargetPosition = pos;
-        callback(null, pos);
+        if (d.hasOwnProperty("statusesMap"))
+        {
+            var map=d.statusesMap;
+            var pos = self.inverted ? tools.reversePercentage(map.Position) : map.Position;
+            self.log("%s [%s] - current target: %s", self.accessory.displayName, self.blind.did,pos);
+            callback(null, pos);
+        }
+        else
+        {
+            self.log("%s [%s] - no current target in %o", self.accessory.displayName, self.blind.did,o);
+            callback(null, 0);
+        }
     });
 };
 
 RademacherBlindsAccessory.prototype.getCurrentPosition = function(callback) {
-    this.log("%s - Getting current position", this.accessory.displayName);
+    this.log("%s [%s] - getting current position", this.accessory.displayName, this.blind.did);
 
     var self = this;
 
     this.getDevice(function(e, d) {
         if(e) return callback(e, false);
-        var pos = self.inverted ? tools.reversePercentage(d.position) : d.position;
-        callback(null, pos);
+        if (d.hasOwnProperty("statusesMap"))
+        {
+            var map=d.statusesMap;
+            var pos = self.inverted ? tools.reversePercentage(map.Position) : map.Position;
+            self.log("%s [%s] - current position: %s", self.accessory.displayName, self.blind.did,pos);
+            self.currentTargetPosition=pos;
+            self.lastPosition=pos;
+            callback(null, pos);
+        }
+        else
+        {
+            self.log("%s [%s] - no current position in %o", self.accessory.displayName, self.blind.did,o);
+            callback(null, 0);
+        }
     });
 };
 
@@ -93,12 +124,21 @@ RademacherBlindsAccessory.prototype.getPositionState = function(callback) {
 };
 
 RademacherBlindsAccessory.prototype.getObstructionDetected = function(callback) {
-    this.log("%s - Getting obstruction detected", this.accessory.displayName);
+    this.log("%s [%s] - getting obstruction detected", this.accessory.displayName, this.blind.did);
 
     var self = this;
     this.getDevice(function(e, d) {
         if(e) return callback(e, false);
-         callback(null, d.hasErrors);
+        if (d.hasOwnProperty("hasErrors"))
+        {
+            self.log("%s [%s] - obstruction detected: %s errors", self.accessory.displayName, self.blind.did, d.hasErrors);
+            callback(null, d.hasErrors>0);
+        }
+        else
+        {
+            self.log("%s [%s] - could not detect obstruction from %o", self.accessory.displayName, self.blind.did,d);
+            callback(null, false);
+        }
     });
 };
 

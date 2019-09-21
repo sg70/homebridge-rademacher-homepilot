@@ -34,7 +34,7 @@ RademacherEnvironmentSensorAccessory.prototype.getMeter = function(callback) {
     	request.get({
     		timeout: 2500,
     		strictSSL: false,
-    		url: this.url + "/deviceajax.do?meter=" + this.did
+    		url: this.url + "/v4/devices/" + this.did
     	}, function(e,r,b) {
     		if(e) return callback(new Error("Request failed."), false);
     		var body = JSON.parse(b);

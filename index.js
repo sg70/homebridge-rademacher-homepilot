@@ -36,117 +36,138 @@ function RademacherHomePilot(log, config, api) {
             request.get({
                 timeout: 1500,
                 strictSSL: false,
-                url: this.url + "/deviceajax.do?devices=1"
+                url: this.url + "/v4/devices?devtype=Actuator"
             }, function(e,r,b){
                 if(e) return new Error("Request failed.");
                 var body = JSON.parse(b);
-                body.devices.forEach(function(data) {
-                    var uuid = UUIDGen.generate("did"+data.did);
-                    var accessory = self.accessories[uuid];
-                    
-                    // blinds
-                    if(data.productName.includes("RolloTron") || data.productName.includes("Troll ") ||
-                       data.productName.includes("Rohrmotor") || data.productName.includes("Connect-Aktor") ||
-                       data.productName.includes("RolloTube"))
-                    {
-                        if (accessory === undefined) {
-                            self.addBlindsAccessory(data);
-                        }
-                        else {
-                            self.log("blinds are online: %s [%s]", accessory.displayName, data.did);
-                            self.accessories[uuid] = new RademacherBlindsAccessory(self.log, (accessory instanceof RademacherBlindsAccessory ? accessory.accessory : accessory), data, self.url, self.inverted);
-                        }
-                    }
-                    // dimmer
-                    else if(data.productName.includes("Universaldimmer"))
-                    {
-                        if (accessory === undefined) {
-                            self.addDimmerAccessory(data);
-                        }
-                        else {
-                            self.log("dimmer is online: %s [%s]", accessory.displayName, data.did);
-                            self.accessories[uuid] = new RademacherDimmerAccessory(self.log, (accessory instanceof RademacherDimmerAccessory ? accessory.accessory : accessory), data, self.url, self.inverted);
-                        }
-                    }
-                    // thermostat
-                    else if(data.productName.includes("rperstellantrieb") || data.productName.includes("Actionneur pour radiateur"))
-                    {
-                        if (accessory === undefined) {
-                            self.addThermostatAccessory(data);
-                        }
-                        else {
-                            self.log("thermostat is online: %s [%s]", accessory.displayName, data.did);
-                            self.accessories[uuid] = new RademacherThermostatAccessory(self.log, (accessory instanceof RademacherThermostatAccessory ? accessory.accessory : accessory), data, self.url, self.inverted);
-                        }
-                    }
-                    // lock/switch
-                    else if(data.productName.includes("Schaltaktor") || data.productName.includes("Universal-Aktor"))
-                    {
-                        if (data.iconSet.name.includes("tor")){
+                if (body.devices)
+                {
+                    body.devices.forEach(function(data) {
+                        var uuid = UUIDGen.generate("did"+data.did);
+                        var accessory = self.accessories[uuid];
+                        
+                        // blinds
+                        if(["27601565","35000864","14234511","35000662","36500172","36500572_A","16234511_A"].includes(data.deviceNumber))
+                        {
                             if (accessory === undefined) {
-                                self.addLockAccessory(data);
+                                self.addBlindsAccessory(data);
                             }
-                            else
-                            { 
-                                self.log("lock is online: %s [%s]", accessory.displayName, data.did);
-                                self.accessories[uuid] = new RademacherLockAccessory(self.log, (accessory instanceof RademacherLockAccessory ? accessory.accessory : accessory), data, self.url);
+                            else {
+                                self.log("blinds are online: %s [%s]", accessory.displayName, data.did);
+                                self.accessories[uuid] = new RademacherBlindsAccessory(self.log, (accessory instanceof RademacherBlindsAccessory ? accessory.accessory : accessory), data, self.url, self.inverted);
                             }
                         }
-                        else {
+                        // dimmer
+                        else if(["?"].includes(data.deviceNumber))
+                        {
                             if (accessory === undefined) {
-                                self.addSwitchAccessory(data);
+                                self.addDimmerAccessory(data);
                             }
-                            else
-                            {
-                                self.log("switch is online: %s [%s]", accessory.displayName, data.did);
-                                self.accessories[uuid] = new RademacherSwitchAccessory(self.log, (accessory instanceof RademacherSwitchAccessory ? accessory.accessory : accessory), data, self.url);
+                            else {
+                                self.log("dimmer is online: %s [%s]", accessory.displayName, data.did);
+                                self.accessories[uuid] = new RademacherDimmerAccessory(self.log, (accessory instanceof RademacherDimmerAccessory ? accessory.accessory : accessory), data, self.url, self.inverted);
                             }
                         }
-                    }
-                    // enviroment sensor
-                    else if(data.productName.includes("Umweltsensor"))
-                    {
-                        self.addEnvironmentSensorAccessory(accessory, data);
-                    }
-                    // unknown
-                    else
-                    {
-                       self.log("Unknown product: %s",data.productName);
-                    }
-                });
+                        // thermostat
+                        else if(["35003064"].includes(data.deviceNumber))
+                        {
+                            if (accessory === undefined) {
+                                self.addThermostatAccessory(data);
+                            }
+                            else {
+                                self.log("thermostat is online: %s [%s]", accessory.displayName, data.did);
+                                self.accessories[uuid] = new RademacherThermostatAccessory(self.log, (accessory instanceof RademacherThermostatAccessory ? accessory.accessory : accessory), data, self.url, self.inverted);
+                            }
+                        }
+                        // lock/switch
+                        else if(["35000262","35001164"].includes(data.deviceNumber))
+                        {
+                            if (data.iconSet.k.includes("iconset31")){
+                                if (accessory === undefined) {
+                                    self.addLockAccessory(data);
+                                }
+                                else
+                                { 
+                                    self.log("lock is online: %s [%s]", accessory.displayName, data.did);
+                                    self.accessories[uuid] = new RademacherLockAccessory(self.log, (accessory instanceof RademacherLockAccessory ? accessory.accessory : accessory), data, self.url);
+                                }
+                            }
+                            else {
+                                if (accessory === undefined) {
+                                    self.addSwitchAccessory(data);
+                                }
+                                else
+                                {
+                                    self.log("switch is online: %s [%s]", accessory.displayName, data.did);
+                                    self.accessories[uuid] = new RademacherSwitchAccessory(self.log, (accessory instanceof RademacherSwitchAccessory ? accessory.accessory : accessory), data, self.url);
+                                }
+                            }
+                        }
+                        // enviroment sensor
+                        else if(["32000064","32000064_A","32000064_S"].includes(data.deviceNumber))
+                        {
+                            self.addEnvironmentSensorAccessory(accessory, data);
+                        }
+                        // unknown
+                        else
+                        {
+                        self.log("Unknown product: %s",data.deviceNumber);
+                        self.log(data);
+                        }
+                    });
+                }
+                else
+                {
+                    self.log("No devices found in %s",body);
+                }
             });
             request.get({
                 timeout: 1500,
                 strictSSL: false,
-                url: this.url + "/deviceajax.do?sensors=1"
+                url: this.url + "/v4/devices?devtype=Sensor"
             }, function(e,r,b){
                 if(e) return new Error("Request failed.");
                 var body = JSON.parse(b);
-                body.devices.forEach(function(data) {
-                    var uuid = UUIDGen.generate("did"+data.did);
-                    var accessory = self.accessories[uuid];
-                    
-                    // smoke alarm
-                    if(data.productName.includes("Rauchwarnmelder"))
-                    {
-                        if (accessory === undefined) {
-                            self.addSmokeAlarmAccessory(data);
+                if (body.meters)
+                {
+                    body.meters.forEach(function(data) {
+                        var uuid = UUIDGen.generate("did"+data.did);
+                        var accessory = self.accessories[uuid];
+                        
+                        // smoke alarm
+                        if(["32001664"].includes(data.deviceNumber))
+                        {
+                            if (accessory === undefined) {
+                                self.addSmokeAlarmAccessory(data);
+                            }
+                            else {
+                                self.log("smoke alarm is online: %s [%s]", accessory.displayName, data.did);
+                                self.accessories[uuid] = new RademacherSmokeAlarmAccessory(self.log, (accessory instanceof RademacherSmokeAlarmAccessory ? accessory.accessory : accessory), data, self.url);
+                            }
                         }
-                        else {
-                            self.log("smoke alarm is online: %s [%s]", accessory.displayName, data.did);
-                            self.accessories[uuid] = new RademacherSmokeAlarmAccessory(self.log, (accessory instanceof RademacherSmokeAlarmAccessory ? accessory.accessory : accessory), data, self.url);
+                        // environment sensor
+                        else if(["32000064","32000064_A","32000064_S"].includes(data.deviceNumber))
+                        {
+                            self.addEnvironmentSensorAccessory(accessory, data);
                         }
-                    }
-                    else if(data.productName.includes("Umweltsensor"))
-                    {
-                        self.addEnvironmentSensorAccessory(accessory, data);
-                    }
-                    // unknown
-                    else
-                    {
-                       self.log("Unknown product: %s",data.productName);
-                    }
-                });
+                        // door/window sensor
+                        else if(["32003164"].includes(data.deviceNumber))
+                        {
+                            self.log("Unknown product: %s (but door/window sensor coming soon...)",data.deviceNumber);
+                            self.log(data);
+                        }                    
+                        // unknown
+                        else
+                        {
+                        self.log("Unknown product: %s",data.deviceNumber);
+                        self.log(data);
+                        }
+                    });
+                }
+                else
+                {
+                    self.log("No meters found in %s",body);
+                }
             });
         }.bind(this));
     }

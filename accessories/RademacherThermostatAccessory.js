@@ -8,7 +8,7 @@ function RademacherThermostatAccessory(log, accessory, thermostat, url) {
 
     this.thermostat = thermostat;
     
-    this.currentTemperature = tools.duofernTemp2HomekitTemp(this.thermostat.position);
+    this.currentTemperature = tools.duofernTemp2HomekitTemp(this.thermostat.statusesMap.Position);
     this.lastTemperature = this.currentTemperature;
     this.targetTemperature = this.currentTemperature
 
@@ -42,43 +42,43 @@ function RademacherThermostatAccessory(log, accessory, thermostat, url) {
 RademacherThermostatAccessory.prototype = Object.create(RademacherAccessory.prototype);
 
 RademacherThermostatAccessory.prototype.getCurrentHeatingCoolingState = function(callback) {
-    this.log("%s - Getting current state for %s", this.accessory.displayName, this.accessory.UUID);
-    this.log("%s - current state for %s is %s", this.accessory.displayName, this.accessory.UUID, this.currentState);
+    this.log("%s [%s] - getting current state", this.accessory.displayName, this.thermostat.did);
+    this.log("%s [%s] - current state for %s is %s", this.accessory.displayName, this.thermostat.did, this.currentState);
     callback(null, this.currentState);
 };
 
 RademacherThermostatAccessory.prototype.getCurrentTemperature = function(callback) {
-    this.log("%s - Getting current temperature for %s", this.accessory.displayName, this.accessory.UUID);
+    this.log("%s [%s] - getting current temperature", this.accessory.displayName, this.thermostat.did);
     var self = this;
     this.getDevice(function(e, d) {
         if(e) return callback(e, false);
-        var pos = d.position/10;
-        self.log("%s - current temperature for %s is %d", self.accessory.displayName, self.accessory.UUID,pos);
+        var pos = d?d.statusesMap.acttemperatur/10:0;
+        self.log("%s [%s] - current temperature is %d", self.accessory.displayName, self.thermostat.did,pos);
         callback(null, pos);
     });
 };
 
 RademacherThermostatAccessory.prototype.getTargetTemperature = function(callback) {
-    this.log("%s - Getting target temperature for %s", this.accessory.displayName, this.accessory.UUID);
+    this.log("%s [%s] - getting target temperature", this.accessory.displayName, this.thermostat.did);
     var self = this;
     this.getDevice(function(e, d) {
         if(e) return callback(e, false);
-        var pos = d.position/10;
-        self.log("%s - target temperature for %s is %d", self.accessory.displayName, self.accessory.UUID,pos);
+        var pos = d?d.statusesMap.Position/10:0;
+        self.log("%s [%s] - target temperature is %d", self.accessory.displayName, self.thermostat.did,pos);
         callback(null, pos);
     });
 };
 
 RademacherThermostatAccessory.prototype.setTargetTemperature = function(temperature, callback, context) {
     if (context) {
-        this.log("%s - Setting target temperature to %d", this.accessory.displayName, temperature);
-
+        this.log("%s [%s] - setting target temperature to %d", this.accessory.displayName, this.thermostat.did, temperature);
         var self = this;
         this.targetTemperature=temperature;
-        var params = "cid=9&did="+this.thermostat.did+"&command=1&goto="+tools.homekitTemp2DuofernTemp(this.targetTemperature);
-        request.post({
-            headers: {'content-type' : 'application/x-www-form-urlencoded'},
-            url: this.url + "/deviceajax.do",
+
+        var params = "{\"name\":\"TARGET_TEMPERATURE_CFG\",\"value\":"+this.targetTemperature+"}";
+        request.put({
+            headers: {'content-type' : 'application/json'},
+            url: this.url + "/devices/"+this.thermostat.did,
             body: params
             }, function(e,r,b){
                     if(e) return callback(new Error("Request failed."), self.targetTemperature);
@@ -108,7 +108,7 @@ RademacherThermostatAccessory.prototype.setTargetHeatingCoolingState = function(
 };
 
 RademacherThermostatAccessory.prototype.update = function() {
-    this.log(`Updating %s`, this.accessory.displayName);
+    this.log(`Updating %s [%s]`, this.accessory.displayName, this.thermostat.did);
     var self = this;
 
     // Thermostat

@@ -17,7 +17,7 @@ function RademacherSmokeAlarmAccessory(log, accessory, sensor, url) {
 RademacherSmokeAlarmAccessory.prototype = Object.create(RademacherAccessory.prototype);
 
 RademacherSmokeAlarmAccessory.prototype.getSmokeDetected = function (callback) {
-    this.log("%s - Getting smoke detected", this.accessory.displayName);
+    this.log("%s [%s] - getting smoke detected", this.accessory.displayName, this.sensor.did);
 
     var self = this;
     var did = this.did;
@@ -25,14 +25,16 @@ RademacherSmokeAlarmAccessory.prototype.getSmokeDetected = function (callback) {
     request.get({
         timeout: 2500,
         strictSSL: false,
-        url: this.url + "/deviceajax.do?sensors=1"
+        url: this.url + "/v4/devices?devtype=Sensor"
     }, function(e,r,b) {
         if(e) return callback(new Error("Request failed: "+e), false);
         var body = JSON.parse(b);
-        body.devices.forEach(function(data) {
+        body.meters.forEach(function(data) {
             if(data.did == did)
             {
-                var pos = data.position;
+                var sd=data.readings.smoke_detected
+                self.log("%s [%s] - smoke detected=%s", self.accessory.displayName, self.sensor.did, sd);
+                var pos = sd?100:0;
                 callback(null, pos);
             }
         });
