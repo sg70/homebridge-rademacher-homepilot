@@ -21,3 +21,9 @@ Configuration sample:
       }
     ]
 ```
+
+# Community
+
+Join Homebridge slack team at https://homebridge-slackin.glitch.me/
+Then add channel https://homebridgeteam.slack.com/messages/CNLGTM2SC
+
