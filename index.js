@@ -151,7 +151,7 @@ function RademacherHomePilot(log, config, api) {
                             self.addEnvironmentSensorAccessory(accessory, data);
                         }
                         // door/window sensor
-                        else if(["32003164"].includes(data.deviceNumber))
+                        else if(["32003164","32002119"].includes(data.deviceNumber))
                         {
                             self.log("Unknown product: %s (but door/window sensor coming soon...)",data.deviceNumber);
                             self.log(data);
@@ -159,8 +159,8 @@ function RademacherHomePilot(log, config, api) {
                         // unknown
                         else
                         {
-                        self.log("Unknown product: %s",data.deviceNumber);
-                        self.log(data);
+                            self.log("Unknown product: %s",data.deviceNumber);
+                            self.log(data);
                         }
                     });
                 }
