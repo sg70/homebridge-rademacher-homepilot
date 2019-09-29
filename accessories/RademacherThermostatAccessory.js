@@ -16,20 +16,25 @@ function RademacherThermostatAccessory(log, accessory, thermostat, session) {
     this.service = this.accessory.getService(global.Service.Thermostat);
 
     this.service.getCharacteristic(global.Characteristic.CurrentHeatingCoolingState)
+        .setValue(this.currentState)
         .on('get', this.getCurrentHeatingCoolingState.bind(this));
 
     this.service.getCharacteristic(global.Characteristic.TargetHeatingCoolingState)
+        .setValue(this.currentState)
         .on('get', this.getTargetHeatingCoolingState.bind(this))
         .on('set', this.setTargetHeatingCoolingState.bind(this));
 
     this.service.getCharacteristic(global.Characteristic.CurrentTemperature)
+        .setValue(this.currentTemperature)
         .on('get', this.getCurrentTemperature.bind(this));
 
     this.service.getCharacteristic(global.Characteristic.TargetTemperature)
+        .setValue(self.targetTemperature)
         .on('get', this.getTargetTemperature.bind(this))
         .on('set', this.setTargetTemperature.bind(this));
 
     this.service.getCharacteristic(global.Characteristic.TemperatureDisplayUnits)
+        .setValue(global.Characteristic.TemperatureDisplayUnits.CELSIUS)
         .on('get', this.getTemperatureDisplayUnits.bind(this));
 
     this.accessory.updateReachability(true);
