@@ -1,9 +1,8 @@
-var request = require("request");
 var tools = require("./tools.js");
 var RademacherAccessory = require("./RademacherAccessory.js");
 
-function RademacherSmokeAlarmAccessory(log, accessory, sensor, url) {
-    RademacherAccessory.call(this, log, accessory, sensor, url);
+function RademacherSmokeAlarmAccessory(log, accessory, sensor, session) {
+    RademacherAccessory.call(this, log, accessory, sensor, session);
 
     this.sensor = sensor;
 
@@ -22,13 +21,8 @@ RademacherSmokeAlarmAccessory.prototype.getSmokeDetected = function (callback) {
     var self = this;
     var did = this.did;
 
-    request.get({
-        timeout: 2500,
-        strictSSL: false,
-        url: this.url + "/v4/devices?devtype=Sensor"
-    }, function(e,r,b) {
+    this.session.get("/v4/devices?devtype=Sensor", 2500, function(e, body) {
         if(e) return callback(new Error("Request failed: "+e), false);
-        var body = JSON.parse(b);
         body.meters.forEach(function(data) {
             if(data.did == did)
             {

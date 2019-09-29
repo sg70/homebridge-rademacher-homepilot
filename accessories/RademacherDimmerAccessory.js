@@ -3,8 +3,8 @@ var request = require("request");
 var tools = require("./tools.js");
 var RademacherAccessory = require("./RademacherAccessory.js");
 
-function RademacherDimmerAccessory(log, accessory, dimmer, url) {
-    RademacherAccessory.call(this, log, accessory, dimmer, url);
+function RademacherDimmerAccessory(log, accessory, dimmer, session) {
+    RademacherAccessory.call(this, log, accessory, dimmer, session);
     var self = this;
 
     this.dimmer = dimmer;
