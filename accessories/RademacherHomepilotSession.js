@@ -13,7 +13,7 @@ function responseError(e, r) {
         return null;
     }
     if (r.statusCode == 401) {
-        var error = new Error("Unauthorized. Is access to HomePilot protected with a password?");
+        var error = new Error("Unauthorized. Update the configuration with HomePilot's password.");
         error.statusCode = r.statusCode;
         return error;
     }
@@ -34,8 +34,7 @@ function RademacherHomePilotSession(log, url, password) {
 
 RademacherHomePilotSession.prototype.login = function(callback) {
     if (!this.password) {
-        // insecure mode -- skip login
-        this.log("No password found. Consider protecting access to HomePilot with a password.");
+        this.log("Warning. No password has been configured. Consider protecting access to your HomePilot.");
         callback(null);
         return;
     }
@@ -47,6 +46,12 @@ RademacherHomePilotSession.prototype.login = function(callback) {
     }, function(e, r, b) {
         var error = responseError(e, r);
         if (error) {
+            if (error.statusCode == 500) {
+                // Login endpoints fail with 500 when password is disabled.
+                self.log("Warning. Password has been configured but does not appear to be enabled on HomePilot.");
+                callback(null);
+                return;
+            }
             callback(error);
             return;
         }
