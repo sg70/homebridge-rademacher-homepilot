@@ -52,6 +52,7 @@ RademacherHomePilotSession.prototype.login = function(callback) {
                 callback(null);
                 return;
             }
+            self.log("Login salt error: " + error);
             callback(error);
             return;
         }
@@ -67,6 +68,7 @@ RademacherHomePilotSession.prototype.login = function(callback) {
         }, function(e, r, b) {
             var error = responseError(e, r);
             if (error) {
+                self.log("Login error: " + error);
                 callback(error);
                 return;
             }
@@ -81,6 +83,7 @@ RademacherHomePilotSession.prototype.logout = function(callback) {
         callback(null);
         return;
     }
+    var self = this;
     this.request.post({
         url: this.url + "/authentication/logout",
         body: "",
@@ -88,6 +91,7 @@ RademacherHomePilotSession.prototype.logout = function(callback) {
     }, function(e, r, b) {
         var error = responseError(e, r);
         if (error) {
+            self.log("Logout error: " + error);
             callback(error);
         } else {
             callback(null);
@@ -96,12 +100,14 @@ RademacherHomePilotSession.prototype.logout = function(callback) {
 };
 
 RademacherHomePilotSession.prototype.get = function(path, timeout, callback) {
+    var self = this;
     this.request.get({
         url: this.url + path,
         timeout: timeout
     }, function(e, r, b) {
         var error = responseError(e, r);
         if (error) {
+            self.log("GET error: " + error);
             callback(error, null);
         } else {
             callback(null, JSON.parse(b));
@@ -110,6 +116,7 @@ RademacherHomePilotSession.prototype.get = function(path, timeout, callback) {
 };
 
 RademacherHomePilotSession.prototype.put = function(path, params, timeout, callback) {
+    var self = this;
     this.request.put({
         url: this.url + path,
         headers: {'content-type' : 'application/json'},
@@ -118,6 +125,7 @@ RademacherHomePilotSession.prototype.put = function(path, params, timeout, callb
     }, function(e, r, b) {
         var error = responseError(e, r);
         if (error) {
+            self.log("PUT error: " + error);
             callback(error);
         } else {
             callback(null);
