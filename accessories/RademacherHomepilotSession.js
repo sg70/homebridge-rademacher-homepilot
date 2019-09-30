@@ -13,7 +13,7 @@ function responseError(e, r) {
         return null;
     }
     if (r.statusCode == 401) {
-        var error = new Error("Unauthorized. Is access to HomePilot protected with a password?");
+        var error = new Error("Unauthorized. Update the configuration with HomePilot's password.");
         error.statusCode = r.statusCode;
         return error;
     }
@@ -34,8 +34,7 @@ function RademacherHomePilotSession(log, url, password) {
 
 RademacherHomePilotSession.prototype.login = function(callback) {
     if (!this.password) {
-        // insecure mode -- skip login
-        this.log("No password found. Consider protecting access to HomePilot with a password.");
+        this.log("Warning. No password has been configured. Consider protecting access to your HomePilot.");
         callback(null);
         return;
     }
@@ -47,6 +46,13 @@ RademacherHomePilotSession.prototype.login = function(callback) {
     }, function(e, r, b) {
         var error = responseError(e, r);
         if (error) {
+            if (error.statusCode == 500) {
+                // Login endpoints fail with 500 when password is disabled.
+                self.log("Warning. Password has been configured but does not appear to be enabled on HomePilot.");
+                callback(null);
+                return;
+            }
+            self.log("Login salt error: " + error);
             callback(error);
             return;
         }
@@ -62,6 +68,7 @@ RademacherHomePilotSession.prototype.login = function(callback) {
         }, function(e, r, b) {
             var error = responseError(e, r);
             if (error) {
+                self.log("Login error: " + error);
                 callback(error);
                 return;
             }
@@ -76,6 +83,7 @@ RademacherHomePilotSession.prototype.logout = function(callback) {
         callback(null);
         return;
     }
+    var self = this;
     this.request.post({
         url: this.url + "/authentication/logout",
         body: "",
@@ -83,6 +91,7 @@ RademacherHomePilotSession.prototype.logout = function(callback) {
     }, function(e, r, b) {
         var error = responseError(e, r);
         if (error) {
+            self.log("Logout error: " + error);
             callback(error);
         } else {
             callback(null);
@@ -91,12 +100,14 @@ RademacherHomePilotSession.prototype.logout = function(callback) {
 };
 
 RademacherHomePilotSession.prototype.get = function(path, timeout, callback) {
+    var self = this;
     this.request.get({
         url: this.url + path,
         timeout: timeout
     }, function(e, r, b) {
         var error = responseError(e, r);
         if (error) {
+            self.log("GET error: " + error);
             callback(error, null);
         } else {
             callback(null, JSON.parse(b));
@@ -105,6 +116,7 @@ RademacherHomePilotSession.prototype.get = function(path, timeout, callback) {
 };
 
 RademacherHomePilotSession.prototype.put = function(path, params, timeout, callback) {
+    var self = this;
     this.request.put({
         url: this.url + path,
         headers: {'content-type' : 'application/json'},
@@ -113,6 +125,7 @@ RademacherHomePilotSession.prototype.put = function(path, params, timeout, callb
     }, function(e, r, b) {
         var error = responseError(e, r);
         if (error) {
+            self.log("PUT error: " + error);
             callback(error);
         } else {
             callback(null);
