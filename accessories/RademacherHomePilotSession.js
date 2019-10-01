@@ -47,7 +47,7 @@ RademacherHomePilotSession.prototype.login = function(callback) {
         var error = responseError(e, r);
         if (error) {
             if (error.statusCode == 500) {
-                // Login endpoints fail with 500 when password is disabled.
+                // Salt endpoint fails with 500 when password is disabled.
                 self.log("Warning. Password has been configured but does not appear to be enabled on HomePilot.");
                 callback(null);
                 return;
@@ -68,6 +68,10 @@ RademacherHomePilotSession.prototype.login = function(callback) {
         }, function(e, r, b) {
             var error = responseError(e, r);
             if (error) {
+                if (error.statusCode == 500) {
+                    // 500 here when the salt endpoint worked means wrong password.
+                    error = new Error("Wrong password. Make sure the configured HomePilot's password is correct.")
+                }
                 self.log("Login error: " + error);
                 callback(error);
                 return;
