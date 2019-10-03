@@ -17,10 +17,14 @@ Configuration sample:
       {
         "platform": "RademacherHomePilot",
         "name": "RademacherHomePilot",
-        "url": "http://192.168.0.1"
+        "url": "http://192.168.0.1",
+        "password": ""
       }
     ]
 ```
+
+* `url`: address of HomePilot's web interface in your local network,
+* `password`: password to HomePilot (if enabled in its web interface)
 
 # Community
 

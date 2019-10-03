@@ -1,10 +1,9 @@
-var request = require("request");
 var tools = require("./tools.js");
 
-function RademacherLockAccessory(log, accessory, sw, url) {
+function RademacherLockAccessory(log, accessory, sw, session) {
     this.log = log;
     this.sw = sw;
-    this.url = url;
+    this.session = session;
     this.accessory = accessory;
     this.lockservice = accessory.getService(global.Service.LockMechanism);
     

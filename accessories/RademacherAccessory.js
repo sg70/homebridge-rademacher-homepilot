@@ -1,6 +1,4 @@
-var request = require("request");
-
-function RademacherAccessory(log, accessory, data, url) {
+function RademacherAccessory(log, accessory, data, session) {
     var info = accessory.getService(global.Service.AccessoryInformation);
     
     accessory.context.manufacturer = "Rademacher";
@@ -17,7 +15,7 @@ function RademacherAccessory(log, accessory, data, url) {
     
     this.accessory = accessory;
     this.log = log;
-    this.url = url;
+    this.session = session;
     this.did = data.did;
     this.lastUpdate = 0;
     this.device = null;
@@ -26,13 +24,8 @@ function RademacherAccessory(log, accessory, data, url) {
 RademacherAccessory.prototype.getDevice = function(callback) {
     if (this.lastUpdate < Date.now()) {
         var self = this;
-    	request.get({
-    		timeout: 2500,
-    		strictSSL: false,
-    		url: this.url + "/v4/devices/" + this.did
-    	}, function(e,r,b) {
-    		if(e) return callback(new Error("Request failed."), false);
-            var body = JSON.parse(b);
+        this.session.get("/v4/devices/" + this.did, 2500, function(e, body) {
+    		if(e) return callback(new Error("Request failed: "+e), false);
             if (body.hasOwnProperty("device") || body.hasOwnProperty("meter"))
             {
                 var device = body.hasOwnProperty("device")?body.device:body.meter;
