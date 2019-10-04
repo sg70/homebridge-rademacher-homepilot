@@ -67,7 +67,7 @@ function RademacherHomePilot(log, config, api) {
                             }
                         }
                         // thermostat
-                        else if(["35003064","32501812_A"].includes(data.deviceNumber))
+                        else if(["35003064","32501812_A","35002319"].includes(data.deviceNumber))
                         {
                             if (accessory === undefined) {
                                 self.addThermostatAccessory(data);
@@ -78,7 +78,7 @@ function RademacherHomePilot(log, config, api) {
                             }
                         }
                         // lock/switch
-                        else if(["35000262","35001164"].includes(data.deviceNumber))
+                        else if(["35000262","35001164","45059071"].includes(data.deviceNumber))
                         {
                             if (data.iconSet.k.includes("iconset31")){
                                 if (accessory === undefined) {
