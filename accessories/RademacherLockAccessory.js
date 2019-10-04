@@ -19,32 +19,21 @@ function RademacherLockAccessory(log, accessory, sw, session) {
 }
 
 RademacherLockAccessory.prototype.getState =function (callback) {
-    this.log("%s [%s] - get lock state", this.accessory.displayName, this.sw.did)
+    this.log("%s [%s] - get lock state (always true)", this.accessory.displayName, this.sw.did)
     callback(null, true);
 }
 
 RademacherLockAccessory.prototype.setState = function (state, callback) {
     var self=this;
-    var lockState = (state == global.Characteristic.LockTargetState.SECURED) ? "lock" : "unlock";
-    this.log("%s [%s] - set lock state to %s", this.accessory.displayName, this.sw.did, lockState)
+    this.log("%s [%s] - unlock", this.accessory.displayName, this.sw.did)
 
-    callback(null);
-    return; //TODO
-
-    var params = "cid=10&did="+this.sw.did+"&command=1";
-    request.post({
-        headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url: this.url + "/deviceajax.do",
-        body: params
-        }, function(e,r,b){
-            if(e) return callback(new Error("Request failed."), false);
-            if(r.statusCode == 200)
-            {
-                // alway unlock
-                self.lockservice.setCharacteristic(global.Characteristic.LockCurrentState, global.Characteristic.LockCurrentState.UNSECURED);
-                self.lockservice.setCharacteristic(global.Characteristic.LockCurrentState, global.Characteristic.LockCurrentState.SECURED)
-                callback(null);
-            }
+    var params = {name: "TURN_ON_CMD"};
+    this.session.put("/devices/"+this.sw.did, params, 2500, function (e) {
+            if(e) return callback(new Error("Request failed: "+e), true);
+            // alway unlock
+            self.lockservice.setCharacteristic(global.Characteristic.LockCurrentState, global.Characteristic.LockCurrentState.UNSECURED);
+            self.lockservice.setCharacteristic(global.Characteristic.LockCurrentState, global.Characteristic.LockCurrentState.SECURED)
+            return callback(null, true);
     });
 }
 

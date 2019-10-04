@@ -111,7 +111,7 @@ RademacherHomePilotSession.prototype.get = function(path, timeout, callback) {
     }, function(e, r, b) {
         var error = responseError(e, r);
         if (error) {
-            self.log("GET error: " + error);
+            self.log("GET error for path %s%s: %s",self.url,path,error);
             callback(error, null);
         } else {
             callback(null, JSON.parse(b));
@@ -129,7 +129,7 @@ RademacherHomePilotSession.prototype.put = function(path, params, timeout, callb
     }, function(e, r, b) {
         var error = responseError(e, r);
         if (error) {
-            self.log("PUT error: " + error);
+            self.log("PUT error for path %s%s: %s",self.url,path,error);
             callback(error);
         } else {
             callback(null);

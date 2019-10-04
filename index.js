@@ -80,7 +80,8 @@ function RademacherHomePilot(log, config, api) {
                         // lock/switch
                         else if(["35000262","35001164","45059071"].includes(data.deviceNumber))
                         {
-                            if (data.iconSet.k.includes("iconset31")){
+                            // icon = "Schließkontakt" ? => lock
+                            if (data.iconSet.k.includes("iconset27")){
                                 if (accessory === undefined) {
                                     self.addLockAccessory(data);
                                 }
@@ -175,8 +176,8 @@ function RademacherHomePilot(log, config, api) {
             };
             self.session.login(function(e) {
                 if(e) throw new Error("Login failed: "+e);
-                self.session.get("/v4/devices?devtype=Actuator", 1500, handleActuators);
-                self.session.get("/v4/devices?devtype=Sensor", 1500, handleSensors);
+                self.session.get("/v4/devices?devtype=Actuator", 5000, handleActuators);
+                self.session.get("/v4/devices?devtype=Sensor", 5000, handleSensors);
             });
         }.bind(this));
     }
