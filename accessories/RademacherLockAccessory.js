@@ -1,6 +1,8 @@
 var tools = require("./tools.js");
+var RademacherAccessory = require("./RademacherAccessory.js");
 
 function RademacherLockAccessory(log, accessory, sw, session) {
+    RademacherAccessory.call(this, log, accessory, sw, session);
     this.log = log;
     this.sw = sw;
     this.session = session;
@@ -15,12 +17,22 @@ function RademacherLockAccessory(log, accessory, sw, session) {
         .getCharacteristic(global.Characteristic.LockTargetState)
         .on('get', this.getState.bind(this))
         .on('set', this.setState.bind(this));
-    
+
+    // TODO configure interval
+    setInterval(this.update.bind(this), 60000);
 }
+
+RademacherLockAccessory.prototype = Object.create(RademacherAccessory.prototype);
 
 RademacherLockAccessory.prototype.getState =function (callback) {
     this.log("%s [%s] - get lock state (always true)", this.accessory.displayName, this.sw.did)
-    callback(null, true);
+    var self = this;
+    this.getDevice(function(e, d) {
+        if(e) return callback(e, false);
+        var pos = d?d.statusesMap.Position:0;
+        self.log("%s [%s] - current state: %s", self.accessory.displayName, self.sw.did, pos);
+        callback(null, (pos==0?true:false));
+    });
 }
 
 RademacherLockAccessory.prototype.setState = function (state, callback) {
@@ -36,6 +48,17 @@ RademacherLockAccessory.prototype.setState = function (state, callback) {
             return callback(null, true);
     });
 }
+
+RademacherLockAccessory.prototype.update = function() {
+    this.log(`%s - [%s] updating`, this.accessory.displayName, this.sw.did);
+    var self = this;
+
+    // Switch state
+    this.getCurrentState(function(foo, state) {
+        self.log(`%s [%s] - updating to %s`, self.accessory.displayName, self.sw.did, state);
+//        self.service.getCharacteristic(Characteristic.On).setValue(state, undefined, self.accessory.context);
+    }.bind(this));
+};
 
 RademacherLockAccessory.prototype.getServices = function() {
     return [this.lockservice];

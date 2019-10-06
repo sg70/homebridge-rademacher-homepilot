@@ -30,7 +30,7 @@ RademacherEnvironmentSensorAccessory.prototype = Object.create(RademacherBlindsA
 RademacherEnvironmentSensorAccessory.prototype.getMeter = function(callback) {
     if (this.lastMeterUpdate < Date.now()) {
     	var self = this;
-        this.session.get("/v4/devices/" + this.did, 2500, function(e, body) {
+        this.session.get("/devices/" + this.did, 2500, function(e, body) {
     		if(e) return callback(new Error("Request failed: "+e), false);
     		var meter = body.data;
     		self.meter = meter;
