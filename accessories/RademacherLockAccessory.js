@@ -54,7 +54,7 @@ RademacherLockAccessory.prototype.update = function() {
     var self = this;
 
     // Switch state
-    this.getCurrentState(function(foo, state) {
+    this.getState(function(foo, state) {
         self.log(`%s [%s] - updating to %s`, self.accessory.displayName, self.sw.did, state);
 //        self.service.getCharacteristic(Characteristic.On).setValue(state, undefined, self.accessory.context);
     }.bind(this));

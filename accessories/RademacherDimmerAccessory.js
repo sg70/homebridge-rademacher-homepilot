@@ -31,7 +31,7 @@ function RademacherDimmerAccessory(log, accessory, dimmer, session) {
 RademacherDimmerAccessory.prototype = Object.create(RademacherAccessory.prototype);
 
 RademacherDimmerAccessory.prototype.getStatus = function(callback) {
-    this.log("%s - Getting current state for %s", this.accessory.displayName, this.accessory.UUID);
+    this.log("%s [%s] - Getting current state", this.accessory.displayName, this.dimmer.did);
 
     var self = this;
 
@@ -45,33 +45,20 @@ RademacherDimmerAccessory.prototype.getStatus = function(callback) {
 RademacherDimmerAccessory.prototype.setStatus = function(status, callback, context) {
     if (context) {
         this.on = status;
-        this.log("%s - Setting dimmer: %s", this.accessory.displayName, status);
+        this.log("%s  [%s] - Setting dimmer: %s", this.accessory.displayName, this.dimmer.did, status);
 
         var self = this;
         this.currentState = status;
         var changed = (this.currentState != this.lastState);
-        this.log("%s - dimmer changed=%s", this.accessory.displayName, changed);
+        this.log("%s  [%s] - dimmer changed=%s", this.accessory.displayName,self.dimmer.did,changed);
         if (changed)
         {            
-            callback(null, self.currentState);
-            return; //TODO
-            var params = "cid="+(this.currentState?"10":"11")+"&did="+this.dimmer.did+"&command=1";
-            request.post({
-                headers: {'content-type' : 'application/x-www-form-urlencoded'},
-                url: this.url + "/deviceajax.do",
-                body: params
-            }, function(e,r,b){
-                    if(e) return callback(new Error("Request failed."), self.currentState);
-                    if(r.statusCode == 200)
-                    {
-                        self.lastState = self.currentState;
-                        return callback(null, self.currentState);
-                    }
-                    else
-                    {
-                        return callback(new Error("Request failed with status "+r.statusCode), self.currentState);
-                    }
-                });
+            var params = {name: this.lastState?"TURN_OFF_CMD":"TURN_ON_CMD"};
+            this.session.put("/devices/"+this.blind.did, params, 2500, function(e) {
+                if(e) return callback(new Error("Request failed: "+e), false);
+                self.lastState = self.currentState;
+                callback(null, self.currentState);
+            });
         }
         else
         {
@@ -81,7 +68,7 @@ RademacherDimmerAccessory.prototype.setStatus = function(status, callback, conte
 };
 
 RademacherDimmerAccessory.prototype.getBrightness = function(callback) {
-    this.log("%s - Getting current brightness", this.accessory.displayName);
+    this.log("%s [%s] - Getting current brightness", this.accessory.displayName, this.dimmer.did);
 
     var self = this;
     this.getDevice(function(e, d) {
@@ -93,35 +80,21 @@ RademacherDimmerAccessory.prototype.getBrightness = function(callback) {
 
 RademacherDimmerAccessory.prototype.setBrightness = function(brightness, callback, context) {
     if (context) {
-        this.log("%s - Setting target brightness: %s", this.accessory.displayName, brightness);
+        this.log("%s [%s] - Setting target brightness: %s", this.accessory.displayName, this.dimmer.did, brightness);
         var self = this;
         this.currentBrightness = brightness;
         var moveUp = (this.currentBrightness >= this.lastBrightness);
         this.service.setCharacteristic(Characteristic.Brightness, (moveUp ? 1 : 0));
-        var target = brightness;
-
-        callback(null, self.currentState);
-        return; //TODO
-
-        var params = "cid=9&did="+this.dimmer.did+"&command=1&goto="+ target;
-        request.post({
-            headers: {'content-type' : 'application/x-www-form-urlencoded'},
-            url: this.url + "/deviceajax.do",
-            body: params
-        }, function(e,r,b){
-            if(e) return callback(new Error("Request failed."), false);
-            if(r.statusCode == 200)
-            {
-                self.service.setCharacteristic(Characteristic.Brightness, self.currentBrightness);
-                self.lastBrightness = self.currentBrightness;
-                callback(null, self.currentBrightness);
-            }
+        var params = {name: "GOTO_POS_CMD", value: brightness};
+        this.session.put("/devices/"+this.blind.did, params, 2500, function(e) {
+            if(e) return callback(new Error("Request failed: "+e), false);
+            callback(null, self.currentBrightness);
         });
-    }
+}
 };
 
 RademacherDimmerAccessory.prototype.update = function() {
-    this.log(`Updating %s`, this.accessory.displayName);
+    this.log(`Updating %s [%s]`, this.accessory.displayName, this.dimmer.did);
     var self = this;
 
     // Status
