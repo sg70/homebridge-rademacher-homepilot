@@ -54,7 +54,7 @@ RademacherDimmerAccessory.prototype.setStatus = function(status, callback, conte
         if (changed)
         {            
             var params = {name: this.lastState?"TURN_OFF_CMD":"TURN_ON_CMD"};
-            this.session.put("/devices/"+this.blind.did, params, 2500, function(e) {
+            this.session.put("/devices/"+this.dimmer.did, params, 2500, function(e) {
                 if(e) return callback(new Error("Request failed: "+e), false);
                 self.lastState = self.currentState;
                 callback(null, self.currentState);
@@ -85,7 +85,7 @@ RademacherDimmerAccessory.prototype.setBrightness = function(brightness, callbac
         this.currentBrightness = brightness;
         this.service.setCharacteristic(Characteristic.Brightness,brightness);
         var params = {name: "GOTO_POS_CMD", value: brightness};
-        this.session.put("/devices/"+this.blind.did, params, 2500, function(e) {
+        this.session.put("/devices/"+this.dimmer.did, params, 2500, function(e) {
             if(e) return callback(new Error("Request failed: "+e), false);
             callback(null, self.currentBrightness);
         });
