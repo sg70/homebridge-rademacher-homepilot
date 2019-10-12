@@ -83,8 +83,7 @@ RademacherDimmerAccessory.prototype.setBrightness = function(brightness, callbac
         this.log("%s [%s] - Setting target brightness: %s", this.accessory.displayName, this.dimmer.did, brightness);
         var self = this;
         this.currentBrightness = brightness;
-        var moveUp = (this.currentBrightness >= this.lastBrightness);
-        this.service.setCharacteristic(Characteristic.Brightness, (moveUp ? 1 : 0));
+        this.service.setCharacteristic(Characteristic.Brightness,brightness);
         var params = {name: "GOTO_POS_CMD", value: brightness};
         this.session.put("/devices/"+this.blind.did, params, 2500, function(e) {
             if(e) return callback(new Error("Request failed: "+e), false);
