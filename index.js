@@ -57,7 +57,7 @@ function RademacherHomePilot(log, config, api) {
                             }
                         }
                         // dimmer
-                        else if(["35140462"].includes(data.deviceNumber))
+                        else if(["35140462","35000462","35001262"].includes(data.deviceNumber))
                         {
                             if (accessory === undefined) {
                                 self.addDimmerAccessory(data);
