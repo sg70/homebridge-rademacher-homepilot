@@ -4,8 +4,7 @@ var RademacherBlindsAccessory = require("./RademacherBlindsAccessory.js");
 function RademacherEnvironmentSensorAccessory(log, accessory, sensor, session, inverted) {
 	RademacherBlindsAccessory.call(this, log, accessory, sensor, session, inverted);
 
-    this.meter = null;
-    this.lastMeterUpdate = 0
+    this.sensor = sensor;
     this.services = [this.service];
     
     // temperature sensor
@@ -27,46 +26,36 @@ function RademacherEnvironmentSensorAccessory(log, accessory, sensor, session, i
 
 RademacherEnvironmentSensorAccessory.prototype = Object.create(RademacherBlindsAccessory.prototype);
 
-RademacherEnvironmentSensorAccessory.prototype.getMeter = function(callback) {
-    if (this.lastMeterUpdate < Date.now()) {
-    	var self = this;
-        this.session.get("/devices/" + this.did, 2500, function(e, body) {
-    		if(e) return callback(new Error("Request failed: "+e), false);
-    		var meter = body.data;
-    		self.meter = meter;
-    		self.lastMeterUpdate = Date.now();
-    		callback(null, meter)
-    	});
-    } else {
-    	callback(null, this.meter);
-    }
-};
-
 RademacherEnvironmentSensorAccessory.prototype.getCurrentTemperature = function (callback) {
-    this.log("%s - Getting current temperature", this.accessory.displayName);
+    this.log("%s [%s] - Getting current temperature", this.accessory.displayName, this.sensor.did);
 
     var self = this;
-    this.getMeter(function(e, d) {
-    	if(e) return callback(e, false);
-    	d.forEach(function(pair) {
-        	if(pair.hasOwnProperty("Temperatur")) {
-        		var value = parseFloat(pair["Temperatur"].replace(",", "."));
-            	callback(null, value);
-        	}
+    var did = this.did;
+    this.session.get("/v4/devices?devtype=Sensor", 2500, function(e, body) {
+        if(e) return callback(new Error("Request failed: "+e), false);
+        body.meters.forEach(function(data) {
+            if(data.did == did)
+            {
+                var t = data.readings.temperature_primary;
+                self.log("%s [%s] - temperature is %s", self.accessory.displayName, self.sensor.did, t);
+                callback(null, t);
+            }
         });
     });
 };
 
 RademacherEnvironmentSensorAccessory.prototype.getCurrentAmbientLightLevel = function (callback) {
-    this.log("%s - Getting current ambient light level", this.accessory.displayName);
-
+    this.log("%s [%s] - Getting current ambient light level", this.accessory.displayName, this.sensor.did);
     var self = this;
-    this.getMeter(function(e, d) {
-    	if(e) return callback(e, false);
-    	d.forEach(function(pair) {
-        	if(pair.hasOwnProperty("Lichtwert")) {
-        		var value = parseFloat(pair["Lichtwert"].replace(",", "."));
-            	callback(null, value);
+    var did = this.did;
+    this.session.get("/v4/devices?devtype=Sensor", 2500, function(e, body) {
+        if(e) return callback(new Error("Request failed: "+e), false);
+        body.meters.forEach(function(data) {
+            if(data.did == did)
+            {
+                var t = data.readings.sun_brightness;
+                self.log("%s [%s] - sun_brightness is %s", self.accessory.displayName, self.sensor.did, t);
+                callback(null, t);
             }
         });
     });
