@@ -10,6 +10,7 @@ var RademacherEnvironmentSensorAccessory = require ('./accessories/RademacherEnv
 var RademacherTemperatureSensorAccessory = require ('./accessories/RademacherTemperatureSensorAccessory.js');
 var RademacherDoorSensorAccessory = require ('./accessories/RademacherDoorSensorAccessory.js');
 var RademacherThermostatAccessory = require('./accessories/RademacherThermostatAccessory.js');
+var RademacherSceneAccessory = require ('./accessories/RademacherSceneAccessory.js');
 
 module.exports = function(homebridge) {
     global.Accessory = homebridge.platformAccessory;
@@ -180,10 +181,33 @@ function RademacherHomePilot(log, config, api) {
                     self.log("No meters found in %s",body);
                 }
             };
+            var handleScenes = function(e, body) {
+                if(e) throw new Error("Request failed: "+e);
+                if (body.scenes)
+                {
+                    body.scenes.forEach(function(data) {
+                        var uuid = UUIDGen.generate("sid"+data.sid);
+                        var accessory = self.accessories[uuid];
+                        
+                        if (accessory === undefined) {
+                            self.addSceneAccessory(data);
+                        }
+                        else {
+                            self.log("scene is online: %s [%s]", accessory.displayName, data.sid);
+                            self.accessories[uuid] = new RademacherSceneAccessory(self.log, (accessory instanceof RademacherSceneAccessory ? accessory.accessory : accessory), data, self.session);
+                        }
+                    });
+                }
+                else
+                {
+                    self.log("No meters found in %s",body);
+                }
+            };
             self.session.login(function(e) {
                 if(e) throw new Error("Login failed: "+e);
                 self.session.get("/v4/devices?devtype=Actuator", 5000, handleActuators);
                 self.session.get("/v4/devices?devtype=Sensor", 5000, handleSensors);
+                self.session.get("/v4/scenes", 5000, handleScenes);
             });
         }.bind(this));
     }
@@ -332,6 +356,21 @@ RademacherHomePilot.prototype.addSwitchAccessory = function(sw) {
     this.accessories[accessory.UUID] = new RademacherSwitchAccessory(this.log, accessory, sw, this.session);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
     this.log("Added switch: %s - %s [%s]", sw.name, sw.description, sw.did);
+};
+
+RademacherHomePilot.prototype.addSceneAccessory = function(scene) {
+    this.log("Found scene: %s - %s [%s]", scene.name, scene.description, scene.sid);
+
+    var name = null;
+    if(!scene.description.trim())
+        name = scene.name;
+    else
+        name = scene.description;
+    var accessory = new global.Accessory(name, UUIDGen.generate("sid"+scene.sid));
+    accessory.addService(global.Service.Switch, name);
+    this.accessories[accessory.UUID] = new RademacherSceneAccessory(this.log, accessory, scene, this.session);
+    this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
+    this.log("Added scene: %s - %s [%s]", scene.name, scene.description, scene.sid);
 };
 
 RademacherHomePilot.prototype.addLockAccessory = function(sw) {

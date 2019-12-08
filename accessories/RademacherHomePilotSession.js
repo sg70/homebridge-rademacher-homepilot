@@ -137,4 +137,22 @@ RademacherHomePilotSession.prototype.put = function(path, params, timeout, callb
     });
 };
 
+RademacherHomePilotSession.prototype.post = function(path, params, timeout, callback) {
+    var self = this;
+    this.request.post({
+        url: this.url + path,
+        headers: {'content-type' : 'application/json'},
+        body: JSON.stringify(params),
+        timeout: timeout
+    }, function(e, r, b) {
+        var error = responseError(e, r);
+        if (error) {
+            self.log("POST error for path %s%s: %s",self.url,path,error);
+            callback(error);
+        } else {
+            callback(null);
+        }
+    });
+};
+
 module.exports = RademacherHomePilotSession;
