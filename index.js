@@ -186,15 +186,18 @@ function RademacherHomePilot(log, config, api) {
                 if (body.scenes)
                 {
                     body.scenes.forEach(function(data) {
-                        var uuid = UUIDGen.generate("sid"+data.sid);
-                        var accessory = self.accessories[uuid];
-                        
-                        if (accessory === undefined) {
-                            self.addSceneAccessory(data);
-                        }
-                        else {
-                            self.log("scene is online: %s [%s]", accessory.displayName, data.sid);
-                            self.accessories[uuid] = new RademacherSceneAccessory(self.log, (accessory instanceof RademacherSceneAccessory ? accessory.accessory : accessory), data, self.session);
+                        if (data.isExecutable==1)
+                        {
+                            var uuid = UUIDGen.generate("sid"+data.sid);
+                            var accessory = self.accessories[uuid];
+                            
+                            if (accessory === undefined) {
+                                self.addSceneAccessory(data);
+                            }
+                            else {
+                                self.log("scene is online: %s [%s]", accessory.displayName, data.sid);
+                                self.accessories[uuid] = new RademacherSceneAccessory(self.log, (accessory instanceof RademacherSceneAccessory ? accessory.accessory : accessory), data, self.session);
+                            }
                         }
                     });
                 }
@@ -207,7 +210,10 @@ function RademacherHomePilot(log, config, api) {
                 if(e) throw new Error("Login failed: "+e);
                 self.session.get("/v4/devices?devtype=Actuator", 5000, handleActuators);
                 self.session.get("/v4/devices?devtype=Sensor", 5000, handleSensors);
-                self.session.get("/v4/scenes", 5000, handleScenes);
+                if (config["scenes_as_switch"] && config["scenes_as_switch"]=="true")
+                {
+                    self.session.get("/v4/scenes", 5000, handleScenes);
+                }
             });
         }.bind(this));
     }
