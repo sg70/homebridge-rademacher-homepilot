@@ -182,7 +182,7 @@ function RademacherHomePilot(log, config, api) {
                         // unknown
                         else
                         {
-                            self.log("Unknown product: %s", data.deviceNumber);
+                            self.log("Unknown product: %s",data.deviceNumber);
                             self.log(data);
                         }
                     });
