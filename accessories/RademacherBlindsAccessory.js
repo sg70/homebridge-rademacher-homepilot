@@ -1,9 +1,8 @@
-var request = require("request");
 var tools = require("./tools.js");
 var RademacherAccessory = require("./RademacherAccessory.js");
 
-function RademacherBlindsAccessory(log, accessory, blind, url, inverted) {
-    RademacherAccessory.call(this, log, accessory, blind, url);
+function RademacherBlindsAccessory(log, accessory, blind, session, inverted) {
+    RademacherAccessory.call(this, log, accessory, blind, session);
 
     this.inverted = inverted;
     this.blind = blind;
@@ -57,20 +56,13 @@ RademacherBlindsAccessory.prototype.setTargetPosition = function(value, callback
         (moveUp ? global.Characteristic.PositionState.INCREASING : global.Characteristic.PositionState.DECREASING));
     var target = self.inverted ? tools.reversePercentage(value) : value;
 
-    var params = "{\"name\":\"GOTO_POS_CMD\",\"value\":"+target+"}";
-    request.put({
-        headers: {'content-type' : 'application/json'},
-        url: this.url + "/devices/"+this.blind.did,
-        body: params
-    }, function(e,r,b){
-        if(e) return callback(new Error("Request failed."), false);
-        if(r.statusCode == 200)
-        {
-            self.service.setCharacteristic(global.Characteristic.CurrentPosition, self.currentTargetPosition);
-            self.service.setCharacteristic(global.Characteristic.PositionState, global.Characteristic.PositionState.STOPPED);
-            self.lastPosition = self.currentTargetPosition;
-            callback(null, self.currentTargetPosition);
-        }
+    var params = {name: "GOTO_POS_CMD", value: target};
+    this.session.put("/devices/"+this.blind.did, params, 2500, function(e) {
+        if(e) return callback(new Error("Request failed: "+e), false);
+        self.service.setCharacteristic(global.Characteristic.CurrentPosition, self.currentTargetPosition);
+        self.service.setCharacteristic(global.Characteristic.PositionState, global.Characteristic.PositionState.STOPPED);
+        self.lastPosition = self.currentTargetPosition;
+        callback(null, self.currentTargetPosition);
     });
 };
 

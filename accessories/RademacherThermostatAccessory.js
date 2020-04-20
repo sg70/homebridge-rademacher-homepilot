@@ -1,9 +1,8 @@
-var request = require("request");
 var tools = require("./tools.js");
 var RademacherAccessory = require("./RademacherAccessory.js");
 
-function RademacherThermostatAccessory(log, accessory, thermostat, url) {
-    RademacherAccessory.call(this, log, accessory, thermostat, url);
+function RademacherThermostatAccessory(log, accessory, thermostat, session) {
+    RademacherAccessory.call(this, log, accessory, thermostat, session);
     var self = this;
 
     this.thermostat = thermostat;
@@ -17,20 +16,25 @@ function RademacherThermostatAccessory(log, accessory, thermostat, url) {
     this.service = this.accessory.getService(global.Service.Thermostat);
 
     this.service.getCharacteristic(global.Characteristic.CurrentHeatingCoolingState)
+        .setValue(this.currentState)
         .on('get', this.getCurrentHeatingCoolingState.bind(this));
 
     this.service.getCharacteristic(global.Characteristic.TargetHeatingCoolingState)
+        .setValue(this.currentState)
         .on('get', this.getTargetHeatingCoolingState.bind(this))
         .on('set', this.setTargetHeatingCoolingState.bind(this));
 
     this.service.getCharacteristic(global.Characteristic.CurrentTemperature)
+        .setValue(this.currentTemperature)
         .on('get', this.getCurrentTemperature.bind(this));
 
     this.service.getCharacteristic(global.Characteristic.TargetTemperature)
+        .setValue(self.targetTemperature)
         .on('get', this.getTargetTemperature.bind(this))
         .on('set', this.setTargetTemperature.bind(this));
 
     this.service.getCharacteristic(global.Characteristic.TemperatureDisplayUnits)
+        .setValue(global.Characteristic.TemperatureDisplayUnits.CELSIUS)
         .on('get', this.getTemperatureDisplayUnits.bind(this));
 
     this.accessory.updateReachability(true);
@@ -75,22 +79,11 @@ RademacherThermostatAccessory.prototype.setTargetTemperature = function(temperat
         var self = this;
         this.targetTemperature=temperature;
 
-        var params = "{\"name\":\"TARGET_TEMPERATURE_CFG\",\"value\":"+this.targetTemperature+"}";
-        request.put({
-            headers: {'content-type' : 'application/json'},
-            url: this.url + "/devices/"+this.thermostat.did,
-            body: params
-            }, function(e,r,b){
-                    if(e) return callback(new Error("Request failed."), self.targetTemperature);
-                    if(r.statusCode == 200)
-                    {
-                        return callback(null, self.targetTemperature);
-                    }
-                    else
-                    {
-                        return callback(new Error("Request failed with status "+r.statusCode), self.targetTemperature);
-                    }
-                });
+        var params = {name: "TARGET_TEMPERATURE_CFG", value: this.targetTemperature};
+        this.session.put("/devices/"+this.thermostat.did, params, 2500, function(e) {
+            if(e) return callback(new Error("Request failed: "+e), self.targetTemperature);
+            return callback(null, self.targetTemperature);
+        });
     }
 };
 

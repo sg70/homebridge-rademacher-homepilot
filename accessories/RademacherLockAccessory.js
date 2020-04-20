@@ -1,10 +1,11 @@
-var request = require("request");
 var tools = require("./tools.js");
+var RademacherAccessory = require("./RademacherAccessory.js");
 
-function RademacherLockAccessory(log, accessory, sw, url) {
+function RademacherLockAccessory(log, accessory, sw, session) {
+    RademacherAccessory.call(this, log, accessory, sw, session);
     this.log = log;
     this.sw = sw;
-    this.url = url;
+    this.session = session;
     this.accessory = accessory;
     this.lockservice = accessory.getService(global.Service.LockMechanism);
     
@@ -16,38 +17,48 @@ function RademacherLockAccessory(log, accessory, sw, url) {
         .getCharacteristic(global.Characteristic.LockTargetState)
         .on('get', this.getState.bind(this))
         .on('set', this.setState.bind(this));
-    
+
+    // TODO configure interval
+    setInterval(this.update.bind(this), 60000);
 }
 
+RademacherLockAccessory.prototype = Object.create(RademacherAccessory.prototype);
+
 RademacherLockAccessory.prototype.getState =function (callback) {
-    this.log("%s [%s] - get lock state", this.accessory.displayName, this.sw.did)
-    callback(null, true);
+    this.log("%s [%s] - get lock state (always true)", this.accessory.displayName, this.sw.did)
+    var self = this;
+    this.getDevice(function(e, d) {
+        if(e) return callback(e, false);
+        var pos = d?d.statusesMap.Position:0;
+        self.log("%s [%s] - current state: %s", self.accessory.displayName, self.sw.did, pos);
+        callback(null, (pos==0?true:false));
+    });
 }
 
 RademacherLockAccessory.prototype.setState = function (state, callback) {
     var self=this;
-    var lockState = (state == global.Characteristic.LockTargetState.SECURED) ? "lock" : "unlock";
-    this.log("%s [%s] - set lock state to %s", this.accessory.displayName, this.sw.did, lockState)
+    this.log("%s [%s] - unlock", this.accessory.displayName, this.sw.did)
 
-    callback(null);
-    return; //TODO
-
-    var params = "cid=10&did="+this.sw.did+"&command=1";
-    request.post({
-        headers: {'content-type' : 'application/x-www-form-urlencoded'},
-        url: this.url + "/deviceajax.do",
-        body: params
-        }, function(e,r,b){
-            if(e) return callback(new Error("Request failed."), false);
-            if(r.statusCode == 200)
-            {
-                // alway unlock
-                self.lockservice.setCharacteristic(global.Characteristic.LockCurrentState, global.Characteristic.LockCurrentState.UNSECURED);
-                self.lockservice.setCharacteristic(global.Characteristic.LockCurrentState, global.Characteristic.LockCurrentState.SECURED)
-                callback(null);
-            }
+    var params = {name: "TURN_ON_CMD"};
+    this.session.put("/devices/"+this.sw.did, params, 2500, function (e) {
+            if(e) return callback(new Error("Request failed: "+e), true);
+            // alway unlock
+            self.lockservice.setCharacteristic(global.Characteristic.LockCurrentState, global.Characteristic.LockCurrentState.UNSECURED);
+            self.lockservice.setCharacteristic(global.Characteristic.LockCurrentState, global.Characteristic.LockCurrentState.SECURED)
+            return callback(null, true);
     });
 }
+
+RademacherLockAccessory.prototype.update = function() {
+    this.log(`%s - [%s] updating`, this.accessory.displayName, this.sw.did);
+    var self = this;
+
+    // Switch state
+    this.getState(function(foo, state) {
+        self.log(`%s [%s] - updating to %s`, self.accessory.displayName, self.sw.did, state);
+//        self.service.getCharacteristic(Characteristic.On).setValue(state, undefined, self.accessory.context);
+    }.bind(this));
+};
 
 RademacherLockAccessory.prototype.getServices = function() {
     return [this.lockservice];

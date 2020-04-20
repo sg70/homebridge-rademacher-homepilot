@@ -1,9 +1,8 @@
-var request = require("request");
 var tools = require("./tools.js");
 var RademacherAccessory = require("./RademacherAccessory.js");
 
-function RademacherSwitchAccessory(log, accessory, sw, url) {
-    RademacherAccessory.call(this, log, accessory, sw, url);
+function RademacherSwitchAccessory(log, accessory, sw, session) {
+    RademacherAccessory.call(this, log, accessory, sw, session);
 
     this.sw = sw;
     this.lastState = this.sw.statusesMap.Position==100?true:false;
@@ -20,7 +19,7 @@ function RademacherSwitchAccessory(log, accessory, sw, url) {
     this.accessory.updateReachability(true);
 
     // TODO configure interval
-    setInterval(this.update.bind(this), 60000);
+    setInterval(this.update.bind(this), 10000);
 }
 
 RademacherSwitchAccessory.prototype = Object.create(RademacherAccessory.prototype);
@@ -46,23 +45,12 @@ RademacherSwitchAccessory.prototype.setCurrentState = function(value, callback) 
     this.log("%s [%s] - switch changed=%s, lastState=%s", this.accessory.displayName, this.sw.did,changed, this.lastState);
     if (changed)
     {
-        var params = "{\"name\":\""+(this.lastState?"TURN_OFF_CMD":"TURN_ON_CMD")+"\"}";
-        request.put({
-            headers: {'content-type' : 'application/json'},
-            url: this.url + "/devices/"+this.sw.did,
-            body: params
-        }, function(e,r,b){
-                if(e) return callback(new Error("Request failed."), self.currentState);
-                if(r.statusCode == 200)
-                {
-                    self.lastState = self.currentState;
-                    return callback(null, self.currentState);
-                }
-                else
-                {
-                    return callback(new Error("Request failed with status "+r.statusCode), self.currentState);
-                }
-            });
+        var params = {name: this.lastState?"TURN_OFF_CMD":"TURN_ON_CMD"};
+        this.session.put("/devices/"+this.sw.did, params, 2500, function (e) {
+            if(e) return callback(new Error("Request failed: "+e), self.currentState);
+            self.lastState = self.currentState;
+            return callback(null, self.currentState);
+        });
     }
     else
     {
