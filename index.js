@@ -7,6 +7,7 @@ var RademacherDimmerAccessory = require ('./accessories/RademacherDimmerAccessor
 var RademacherSwitchAccessory = require ('./accessories/RademacherSwitchAccessory.js');
 var RademacherSmokeAlarmAccessory = require ('./accessories/RademacherSmokeAlarmAccessory.js');
 var RademacherEnvironmentSensorAccessory = require ('./accessories/RademacherEnvironmentSensorAccessory.js');
+var RademacherSunSensorAccessory = require ('./accessories/RademacherSunSensorAccessory.js');
 var RademacherTemperatureSensorAccessory = require ('./accessories/RademacherTemperatureSensorAccessory.js');
 var RademacherDoorSensorAccessory = require ('./accessories/RademacherDoorSensorAccessory.js');
 var RademacherThermostatAccessory = require('./accessories/RademacherThermostatAccessory.js');
@@ -109,11 +110,16 @@ function RademacherHomePilot(log, config, api) {
                         {
                             self.addEnvironmentSensorAccessory(accessory, data);
                         }
+                        // sun sensor
+                        else if(["32000069"].includes(data.deviceNumber))
+                        {
+                            self.addSunSensorAccessory(accessory, data);
+                        }
                         // unknown
                         else
                         {
-                        self.log("Unknown product: %s",data.deviceNumber);
-                        self.log(data);
+                            self.log("Unknown product: %s", data.deviceNumber);
+                            self.log(data);
                         }
                     });
                 }
@@ -146,6 +152,11 @@ function RademacherHomePilot(log, config, api) {
                         {
                             self.addEnvironmentSensorAccessory(accessory, data);
                         }
+                        // sun sensor
+                        else if(["32000069"].includes(data.deviceNumber))
+                        {
+                            self.addSunSensorAccessory(accessory, data);
+                        }
                         // temperature sensor
                         else if(["32501812_S"].includes(data.deviceNumber))
                         {
@@ -171,8 +182,8 @@ function RademacherHomePilot(log, config, api) {
                         // unknown
                         else
                         {
-                        self.log("Unknown product: %s",data.deviceNumber);
-                        self.log(data);
+                            self.log("Unknown product: %s", data.deviceNumber);
+                            self.log(data);
                         }
                     });
                 }
@@ -203,7 +214,7 @@ function RademacherHomePilot(log, config, api) {
                 }
                 else
                 {
-                    self.log("No meters found in %s",body);
+                    self.log("No meters found in %s", body);
                 }
             };
             self.session.login(function(e) {
@@ -286,6 +297,41 @@ RademacherHomePilot.prototype.addEnvironmentSensorAccessory = function(accessory
         this.accessories[accessory.UUID] = new RademacherEnvironmentSensorAccessory(this.log, accessory, sensor, this.session, this.inverted);
     }
     this.log("Added environment sensor: %s - %s [%s]", sensor.name, sensor.description, sensor.did);
+};
+
+RademacherHomePilot.prototype.addSunSensorAccessory = function(accessoryIn, sensor) 
+{
+    this.log("Found sun sensor: %s - %s [%s]", sensor.name, sensor.description, sensor.did);
+
+    var name = null;
+    if (!sensor.description.trim()) {
+        name = sensor.name;
+    }
+    else {
+        name = sensor.description;
+    }
+
+    var accessory = null;
+
+    if (accessoryIn === undefined) {
+        this.log("Found sun sensor: new accessory with LightSensor and Switch characteristics");
+        accessory = new global.Accessory(name, UUIDGen.generate("did" + sensor.did));
+        accessory.addService(global.Service.LightSensor, name);
+        accessory.addService(global.Service.Switch, name);
+        this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
+    }
+    else if (accessoryIn instanceof RademacherSunSensorAccessory) {
+        accessory = accessoryIn.accessory;
+    }
+    else {
+        accessory = accessoryIn;
+    }
+
+    if (!(this.accessories[accessory.UUID] instanceof RademacherSunSensorAccessory)) {
+        this.accessories[accessory.UUID] = new RademacherSunSensorAccessory(this.log, accessory, sensor, this.session, this.inverted);
+    }
+    
+    this.log("Added sun sensor: %s - %s [%s]", sensor.name, sensor.description, sensor.did);
 };
 
 RademacherHomePilot.prototype.addTemperatureSensorAccessory = function(sensor) {
