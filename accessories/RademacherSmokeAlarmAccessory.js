@@ -18,8 +18,6 @@ function RademacherSmokeAlarmAccessory(log, accessory, sensor, session) {
         .on('get', this.getCurrentBatteryLevel.bind(this));
     this.services.push(batteryService);
 
-    this.accessory.updateReachability(true);
-
     // TODO configure interval
     setInterval(this.update.bind(this), 10000);
 

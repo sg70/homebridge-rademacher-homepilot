@@ -23,8 +23,6 @@ function RademacherSunSensorAccessory(log, accessory, sensor, session)
         .on('get', this.getCurrentSunState.bind(this));
     this.services.push(switchService);
 
-    this.accessory.updateReachability(true);
-
     setInterval(this.updateStates.bind(this), 10000);
 }
 

@@ -20,8 +20,6 @@ function RademacherEnvironmentSensorAccessory(log, accessory, sensor, session, i
 		.setProps({minValue: 0, maxValue: 150000})
 		.on('get', this.getCurrentAmbientLightLevel.bind(this));
     this.services.push(lightService);
-
-    this.accessory.updateReachability(true);
 }
 
 RademacherEnvironmentSensorAccessory.prototype = Object.create(RademacherBlindsAccessory.prototype);

@@ -16,8 +16,6 @@ function RademacherSwitchAccessory(log, accessory, sw, session) {
         .on('set', this.setCurrentState.bind(this))
         .on('get', this.getCurrentState.bind(this));
 
-    this.accessory.updateReachability(true);
-
     // TODO configure interval
     setInterval(this.update.bind(this), 10000);
 }

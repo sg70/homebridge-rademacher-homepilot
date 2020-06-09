@@ -37,8 +37,6 @@ function RademacherThermostatAccessory(log, accessory, thermostat, session) {
         .setValue(global.Characteristic.TemperatureDisplayUnits.CELSIUS)
         .on('get', this.getTemperatureDisplayUnits.bind(this));
 
-    this.accessory.updateReachability(true);
-
     // TODO configure interval
     setInterval(this.update.bind(this), 60000);
 }

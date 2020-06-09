@@ -12,9 +12,6 @@ function RademacherSceneAccessory(log, accessory, scene, session) {
         .getCharacteristic(global.Characteristic.On).setValue(false)
         .on('set', this.setCurrentState.bind(this))
         .on('get', this.getCurrentState.bind(this));
-
-    this.accessory.updateReachability(true);
-
 }
 
 RademacherSceneAccessory.prototype = Object.create(RademacherAccessory.prototype);

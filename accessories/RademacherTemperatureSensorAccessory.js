@@ -11,8 +11,6 @@ function RademacherTemperatureSensorAccessory(log, accessory, sensor, session) {
         .setProps({minValue: -30.0, maxValue: 80.0})
         .setValue(sensor.readings.temperature_primary)
         .on('get', this.getCurrentTemperature.bind(this));
-
-    this.accessory.updateReachability(true);
 }
 
 RademacherTemperatureSensorAccessory.prototype = Object.create(RademacherAccessory.prototype);

@@ -22,8 +22,6 @@ function RademacherDimmerAccessory(log, accessory, dimmer, session) {
         .on('get', this.getBrightness.bind(this))
         .on('set', this.setBrightness.bind(this));
 
-    this.accessory.updateReachability(true);
-
     // TODO configure interval
     setInterval(this.update.bind(this), 60000);
 }
