@@ -22,10 +22,11 @@ function responseError(e, r) {
     return error;
 }
 
-function RademacherHomePilotSession(log, url, password) {
+function RademacherHomePilotSession(log, url, password, password_hashed) {
     this.log = log;
     this.url = url;
-    this.password = password ? sha256hex(password) : null;
+    this.password_hashed ? (password_hashed == "true") : false;
+    this.password = password ? (password_hashed?password:sha256hex(password)) : null;
     this.request = request.defaults({
         strictSSL: false,
         jar: true // enable cookie store

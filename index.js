@@ -33,7 +33,7 @@ function RademacherHomePilot(log, config, api) {
     this.inverted = true;
 
     // HomePilot session
-    this.session = new RademacherHomePilotSession(log, config["url"], config["password"]);
+    this.session = new RademacherHomePilotSession(log, config["url"], config["password"], config["password_hashed"]);
 
     if (api) {
         this.api = api;

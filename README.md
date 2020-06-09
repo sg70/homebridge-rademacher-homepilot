@@ -19,6 +19,7 @@ Configuration sample:
         "name": "RademacherHomePilot",
         "url": "http://192.168.0.1",
         "password": "",
+        "password_hashed": "false",
         "scenes_as_switch":"false"
       }
     ]
@@ -26,6 +27,8 @@ Configuration sample:
 
 * `url`: address of HomePilot's web interface in your local network,
 * `password`: password to HomePilot (if enabled in its web interface)
+* `password_hashed`: password to HomePilot is alerady hashed with sha256 (if enabled in its web interface)
+* `scenes_as_switch`: if "true", all scenes are added as switch to HomeKit, otherwise scenes are not added at all 
 
 # Community
 
