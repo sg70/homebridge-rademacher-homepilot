@@ -40,8 +40,6 @@ function RademacherBlindsAccessory(log, accessory, blind, session, inverted) {
         .setValue(this.blind.hasErrors)
         .on('get', this.getObstructionDetected.bind(this));
 
-    this.accessory.updateReachability(true);
-
 }
 
 RademacherBlindsAccessory.prototype = Object.create(RademacherAccessory.prototype);

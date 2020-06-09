@@ -22,8 +22,6 @@ function RademacherDoorSensorAccessory(log, accessory, sensor, session) {
     this.services.push(batteryService);
 
 
-    this.accessory.updateReachability(true);
-
     // TODO configure interval
     setInterval(this.update.bind(this), 10000);
 
