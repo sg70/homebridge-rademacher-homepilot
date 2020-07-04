@@ -1,8 +1,8 @@
 var tools = require("./tools.js");
 var RademacherAccessory = require("./RademacherAccessory.js");
 
-function RademacherBlindsAccessory(log, accessory, blind, session, inverted) {
-    RademacherAccessory.call(this, log, accessory, blind, session);
+function RademacherBlindsAccessory(log, debug, accessory, blind, session, inverted) {
+    RademacherAccessory.call(this, log, debug, accessory, blind, session);
 
     this.inverted = inverted;
     this.blind = blind;
@@ -65,7 +65,7 @@ RademacherBlindsAccessory.prototype.setTargetPosition = function(value, callback
 };
 
 RademacherBlindsAccessory.prototype.getTargetPosition = function(callback) {
-    this.log("%s [%s] - Current target position: %s", this.accessory.displayName, this.blind.did,this.currentTargetPosition);
+    if (this.debug) this.log("%s [%s] - Current target position: %s", this.accessory.displayName, this.blind.did,this.currentTargetPosition);
     var self = this;
 
     this.getDevice(function(e, d) {
@@ -74,19 +74,19 @@ RademacherBlindsAccessory.prototype.getTargetPosition = function(callback) {
         {
             var map=d.statusesMap;
             var pos = self.inverted ? tools.reversePercentage(map.Position) : map.Position;
-            self.log("%s [%s] - current target: %s", self.accessory.displayName, self.blind.did,pos);
+            if (self.debug) self.log("%s [%s] - current target: %s", self.accessory.displayName, self.blind.did,pos);
             callback(null, pos);
         }
         else
         {
-            self.log("%s [%s] - no current target in %o", self.accessory.displayName, self.blind.did,o);
+            if (self.debug) self.log("%s [%s] - no current target in %o", self.accessory.displayName, self.blind.did,o);
             callback(null, 0);
         }
     });
 };
 
 RademacherBlindsAccessory.prototype.getCurrentPosition = function(callback) {
-    this.log("%s [%s] - getting current position", this.accessory.displayName, this.blind.did);
+    if (this.debug) this.log("%s [%s] - getting current position", this.accessory.displayName, this.blind.did);
 
     var self = this;
 
@@ -96,14 +96,14 @@ RademacherBlindsAccessory.prototype.getCurrentPosition = function(callback) {
         {
             var map=d.statusesMap;
             var pos = self.inverted ? tools.reversePercentage(map.Position) : map.Position;
-            self.log("%s [%s] - current position: %s", self.accessory.displayName, self.blind.did,pos);
+            if (self.debug) self.log("%s [%s] - current position: %s", self.accessory.displayName, self.blind.did,pos);
             self.currentTargetPosition=pos;
             self.lastPosition=pos;
             callback(null, pos);
         }
         else
         {
-            self.log("%s [%s] - no current position in %o", self.accessory.displayName, self.blind.did,o);
+            if (self.debug) elf.log("%s [%s] - no current position in %o", self.accessory.displayName, self.blind.did,o);
             callback(null, 0);
         }
     });
@@ -114,19 +114,19 @@ RademacherBlindsAccessory.prototype.getPositionState = function(callback) {
 };
 
 RademacherBlindsAccessory.prototype.getObstructionDetected = function(callback) {
-    this.log("%s [%s] - getting obstruction detected", this.accessory.displayName, this.blind.did);
+    if (this.debug) this.log("%s [%s] - getting obstruction detected", this.accessory.displayName, this.blind.did);
 
     var self = this;
     this.getDevice(function(e, d) {
         if(e) return callback(e, false);
         if (d.hasOwnProperty("hasErrors"))
         {
-            self.log("%s [%s] - obstruction detected: %s errors", self.accessory.displayName, self.blind.did, d.hasErrors);
+            if (self.debug) self.log("%s [%s] - obstruction detected: %s errors", self.accessory.displayName, self.blind.did, d.hasErrors);
             callback(null, d.hasErrors>0);
         }
         else
         {
-            self.log("%s [%s] - could not detect obstruction from %o", self.accessory.displayName, self.blind.did,d);
+            if (self.debug) self.log("%s [%s] - could not detect obstruction from %o", self.accessory.displayName, self.blind.did,d);
             callback(null, false);
         }
     });

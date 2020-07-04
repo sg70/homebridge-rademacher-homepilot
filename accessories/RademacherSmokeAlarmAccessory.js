@@ -1,8 +1,8 @@
 var tools = require("./tools.js");
 var RademacherAccessory = require("./RademacherAccessory.js");
 
-function RademacherSmokeAlarmAccessory(log, accessory, sensor, session) {
-    RademacherAccessory.call(this, log, accessory, sensor, session);
+function RademacherSmokeAlarmAccessory(log, debug, accessory, sensor, session) {
+    RademacherAccessory.call(this, log, debug, accessory, sensor, session);
 
     this.sensor = sensor;
     this.services = [];
@@ -26,7 +26,7 @@ function RademacherSmokeAlarmAccessory(log, accessory, sensor, session) {
 RademacherSmokeAlarmAccessory.prototype = Object.create(RademacherAccessory.prototype);
 
 RademacherSmokeAlarmAccessory.prototype.getSmokeDetected = function (callback) {
-    this.log("%s [%s] - getting smoke detected", this.accessory.displayName, this.sensor.did);
+    if (this.debug) this.log("%s [%s] - getting smoke detected", this.accessory.displayName, this.sensor.did);
 
     var self = this;
     var did = this.did;
@@ -37,7 +37,7 @@ RademacherSmokeAlarmAccessory.prototype.getSmokeDetected = function (callback) {
             if(data.did == did)
             {
                 var sd=data.readings.smoke_detected
-                self.log("%s [%s] - smoke detected=%s", self.accessory.displayName, self.sensor.did, sd);
+                if (self.debug) self.log("%s [%s] - smoke detected=%s", self.accessory.displayName, self.sensor.did, sd);
                 var pos = sd?100:0;
                 callback(null, pos);
             }
@@ -46,7 +46,7 @@ RademacherSmokeAlarmAccessory.prototype.getSmokeDetected = function (callback) {
 };
 
 RademacherSmokeAlarmAccessory.prototype.getCurrentBatteryLevel = function (callback) {
-    this.log("%s [%s] - getting current battery level", this.accessory.displayName, this.sensor.did);
+    if (this.debug) this.log("%s [%s] - getting current battery level", this.accessory.displayName, this.sensor.did);
 
     var self = this;
     var did = this.did;
@@ -56,9 +56,9 @@ RademacherSmokeAlarmAccessory.prototype.getCurrentBatteryLevel = function (callb
         body.meters.forEach(function(data) {
             if(data.did == did)
             {
-                self.log(data.readings);
+                if (self.debug) self.log(data.readings);
                 var batteryStatus=data.batteryStatus;
-                self.log("%s [%s] - battery status = %s", self.accessory.displayName, self.sensor.did, batteryStatus);
+                if (self.debug) self.log("%s [%s] - battery status = %s", self.accessory.displayName, self.sensor.did, batteryStatus);
                 return callback(null, batteryStatus);
             }
         });
@@ -70,19 +70,19 @@ RademacherSmokeAlarmAccessory.prototype.getServices = function () {
 };
 
 RademacherSmokeAlarmAccessory.prototype.update = function() {
-    this.log(`%s - [%s] updating`, this.accessory.displayName, this.sensor.did);
+    if (this.debug) this.log(`%s - [%s] updating`, this.accessory.displayName, this.sensor.did);
     var self = this;
 
     // Switch state
     this.getSmokeDetected(function(foo, state) {
-        self.log(`%s [%s] - smoke detected = %s`, self.accessory.displayName, self.sensor.did, state);
+        if (self.debug) self.log(`%s [%s] - smoke detected = %s`, self.accessory.displayName, self.sensor.did, state);
         var smokesensorService = this.accessory.getService(global.Service.SmokeSensor);
         smokesensorService.getCharacteristic(global.Characteristic.SmokeDetected).setValue(state, undefined, self.accessory.context);
     }.bind(this));
 
     // battery level
     this.getCurrentBatteryLevel(function(foo, level) {
-        self.log(`%s [%s] - updating battery level to %s`, self.accessory.displayName, self.sensor.did, level);
+        if (self.debug) self.log(`%s [%s] - updating battery level to %s`, self.accessory.displayName, self.sensor.did, level);
         var batteryService = this.accessory.getService(global.Service.BatteryService);
         batteryService.getCharacteristic(Characteristic.BatteryLevel).setValue(level, undefined, self.accessory.context);
     }.bind(this));

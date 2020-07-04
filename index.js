@@ -25,7 +25,8 @@ module.exports = function(homebridge) {
 function RademacherHomePilot(log, config, api) {
     // global vars
     this.log = log;
-
+    this.debug = (config["debug"] == "true"); 
+    if (this.debug) log("Debugging...")
     var self = this;
 
     // configuration vars
@@ -33,7 +34,7 @@ function RademacherHomePilot(log, config, api) {
     this.inverted = true;
 
     // HomePilot session
-    this.session = new RademacherHomePilotSession(log, config["url"], config["password"], config["password_hashed"]);
+    this.session = new RademacherHomePilotSession(this.log, this.debug, config["url"], config["password"], config["password_hashed"]);
 
     if (api) {
         this.api = api;
@@ -119,7 +120,7 @@ function RademacherHomePilot(log, config, api) {
                         else
                         {
                             self.log("Unknown product: %s", data.deviceNumber);
-                            self.log(data);
+                            if (self.debug) self.log(data);
                         }
                     });
                 }
@@ -244,7 +245,7 @@ RademacherHomePilot.prototype.addBlindsAccessory = function(blind) {
         name = blind.description;
     var accessory = new global.Accessory(name, UUIDGen.generate("did"+blind.did));
     accessory.addService(global.Service.WindowCovering, name);
-    this.accessories[accessory.UUID] = new RademacherBlindsAccessory(this.log, accessory, blind, this.session, this.inverted);
+    this.accessories[accessory.UUID] = new RademacherBlindsAccessory(this.log, this.debug, accessory, blind, this.session, this.inverted);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
     this.log("Added blinds: %s - %s [%s]", blind.name, blind.description, blind.did);
 };
@@ -260,7 +261,7 @@ RademacherHomePilot.prototype.addSmokeAlarmAccessory = function(sensor) {
     var accessory = new global.Accessory(name, UUIDGen.generate("did"+sensor.did));
     accessory.addService(global.Service.SmokeSensor, name);
     accessory.addService(global.Service.BatteryService, name);
-    this.accessories[accessory.UUID] = new RademacherSmokeAlarmAccessory(this.log, accessory, sensor, this.session);
+    this.accessories[accessory.UUID] = new RademacherSmokeAlarmAccessory(this.log, this.debug, accessory, sensor, this.session);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
     this.log("Added smoke alarm: %s - %s [%s]", sensor.name, sensor.description, sensor.did);
 };
@@ -294,7 +295,7 @@ RademacherHomePilot.prototype.addEnvironmentSensorAccessory = function(accessory
     }
     if (!(this.accessories[accessory.UUID] instanceof RademacherEnvironmentSensorAccessory))
     {
-        this.accessories[accessory.UUID] = new RademacherEnvironmentSensorAccessory(this.log, accessory, sensor, this.session, this.inverted);
+        this.accessories[accessory.UUID] = new RademacherEnvironmentSensorAccessory(this.log, this.debug, accessory, sensor, this.session, this.inverted);
     }
     this.log("Added environment sensor: %s - %s [%s]", sensor.name, sensor.description, sensor.did);
 };
@@ -328,7 +329,7 @@ RademacherHomePilot.prototype.addSunSensorAccessory = function(accessoryIn, sens
     }
 
     if (!(this.accessories[accessory.UUID] instanceof RademacherSunSensorAccessory)) {
-        this.accessories[accessory.UUID] = new RademacherSunSensorAccessory(this.log, accessory, sensor, this.session, this.inverted);
+        this.accessories[accessory.UUID] = new RademacherSunSensorAccessory(this.log, this.debug, accessory, sensor, this.session, this.inverted);
     }
     
     this.log("Added sun sensor: %s - %s [%s]", sensor.name, sensor.description, sensor.did);
@@ -344,7 +345,7 @@ RademacherHomePilot.prototype.addTemperatureSensorAccessory = function(sensor) {
         name = sensor.description;
     var accessory = new global.Accessory(name, UUIDGen.generate("did"+sensor.did));
     accessory.addService(global.Service.TemperatureSensor, name);
-    this.accessories[accessory.UUID] = new RademacherTemperatureSensorAccessory(this.log, accessory, sensor, this.session);
+    this.accessories[accessory.UUID] = new RademacherTemperatureSensorAccessory(this.log, this.debug, accessory, sensor, this.session);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
     this.log("Added temperature sensor: %s - %s [%s]", sensor.name, sensor.description, sensor.did);
 };
@@ -360,7 +361,7 @@ RademacherHomePilot.prototype.addDoorSensorAccessory = function(sensor) {
     var accessory = new global.Accessory(name, UUIDGen.generate("did"+sensor.did));
     accessory.addService(global.Service.ContactSensor, name);
     accessory.addService(global.Service.BatteryService, name);
-    this.accessories[accessory.UUID] = new RademacherDoorSensorAccessory(this.log, accessory, sensor, this.session);
+    this.accessories[accessory.UUID] = new RademacherDoorSensorAccessory(this.log, this.debug, accessory, sensor, this.session);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
     this.log("Added door sensor: %s - %s [%s]", sensor.name, sensor.description, sensor.did);
 };
@@ -375,7 +376,7 @@ RademacherHomePilot.prototype.addDimmerAccessory = function(dimmer) {
         name = dimmer.description;
     var accessory = new global.Accessory(name, UUIDGen.generate("did"+dimmer.did));
     accessory.addService(global.Service.Lightbulb, name);
-    this.accessories[accessory.UUID] = new RademacherDimmerAccessory(this.log, accessory, dimmer, this.session);
+    this.accessories[accessory.UUID] = new RademacherDimmerAccessory(this.log, this.debug, accessory, dimmer, this.session);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
     this.log("Added dimmer: %s - %s [%s]", dimmer.name, dimmer.description, dimmer.did);
 };
@@ -390,7 +391,7 @@ RademacherHomePilot.prototype.addThermostatAccessory = function(thermostat) {
         name = thermostat.description;
     var accessory = new global.Accessory(name, UUIDGen.generate("did"+thermostat.did));
     accessory.addService(global.Service.Thermostat, name);
-    this.accessories[accessory.UUID] = new RademacherThermostatAccessory(this.log, accessory, thermostat, this.session);
+    this.accessories[accessory.UUID] = new RademacherThermostatAccessory(this.log, this.debug, accessory, thermostat, this.session);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
     this.log("Added thermostat: %s - %s [%s]", thermostat.name, thermostat.description, thermostat.did);
 };
@@ -405,7 +406,7 @@ RademacherHomePilot.prototype.addSwitchAccessory = function(sw) {
         name = sw.description;
     var accessory = new global.Accessory(name, UUIDGen.generate("did"+sw.did));
     accessory.addService(global.Service.Switch, name);
-    this.accessories[accessory.UUID] = new RademacherSwitchAccessory(this.log, accessory, sw, this.session);
+    this.accessories[accessory.UUID] = new RademacherSwitchAccessory(this.log, this.debug, accessory, sw, this.session);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
     this.log("Added switch: %s - %s [%s]", sw.name, sw.description, sw.did);
 };
@@ -420,7 +421,7 @@ RademacherHomePilot.prototype.addSceneAccessory = function(scene) {
         name = scene.description;
     var accessory = new global.Accessory(name, UUIDGen.generate("sid"+scene.sid));
     accessory.addService(global.Service.Switch, name);
-    this.accessories[accessory.UUID] = new RademacherSceneAccessory(this.log, accessory, scene, this.session);
+    this.accessories[accessory.UUID] = new RademacherSceneAccessory(this.log, this.debug, accessory, scene, this.session);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
     this.log("Added scene: %s - %s [%s]", scene.name, scene.description, scene.sid);
 };
@@ -435,7 +436,7 @@ RademacherHomePilot.prototype.addLockAccessory = function(sw) {
         name = sw.description;
     var accessory = new global.Accessory(name, UUIDGen.generate("did"+sw.did));
     accessory.addService(global.Service.LockMechanism, name);
-    this.accessories[accessory.UUID] = new RademacherLockAccessory(this.log, accessory, sw, this.session);
+    this.accessories[accessory.UUID] = new RademacherLockAccessory(this.log, this.debug, accessory, sw, this.session);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
     this.log("Added lock: %s - %s [%s]", sw.name, sw.description, sw.did);
 };

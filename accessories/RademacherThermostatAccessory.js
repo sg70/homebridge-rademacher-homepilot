@@ -1,8 +1,8 @@
 var tools = require("./tools.js");
 var RademacherAccessory = require("./RademacherAccessory.js");
 
-function RademacherThermostatAccessory(log, accessory, thermostat, session) {
-    RademacherAccessory.call(this, log, accessory, thermostat, session);
+function RademacherThermostatAccessory(log, debug, accessory, thermostat, session) {
+    RademacherAccessory.call(this, log, debug, accessory, thermostat, session);
     var self = this;
 
     this.thermostat = thermostat;
@@ -44,36 +44,36 @@ function RademacherThermostatAccessory(log, accessory, thermostat, session) {
 RademacherThermostatAccessory.prototype = Object.create(RademacherAccessory.prototype);
 
 RademacherThermostatAccessory.prototype.getCurrentHeatingCoolingState = function(callback) {
-    this.log("%s [%s] - getting current state", this.accessory.displayName, this.thermostat.did);
-    this.log("%s [%s] - current state for %s is %s", this.accessory.displayName, this.thermostat.did, this.currentState);
+    if (this.debug) this.log("%s [%s] - getting current state", this.accessory.displayName, this.thermostat.did);
+    if (this.debug) this.log("%s [%s] - current state for %s is %s", this.accessory.displayName, this.thermostat.did, this.currentState);
     callback(null, this.currentState);
 };
 
 RademacherThermostatAccessory.prototype.getCurrentTemperature = function(callback) {
-    this.log("%s [%s] - getting current temperature", this.accessory.displayName, this.thermostat.did);
+    if (this.debug) this.log("%s [%s] - getting current temperature", this.accessory.displayName, this.thermostat.did);
     var self = this;
     this.getDevice(function(e, d) {
         if(e) return callback(e, false);
         var pos = d?d.statusesMap.acttemperatur/10:0;
-        self.log("%s [%s] - current temperature is %d", self.accessory.displayName, self.thermostat.did,pos);
+        if (self.debug) self.log("%s [%s] - current temperature is %d", self.accessory.displayName, self.thermostat.did,pos);
         callback(null, pos);
     });
 };
 
 RademacherThermostatAccessory.prototype.getTargetTemperature = function(callback) {
-    this.log("%s [%s] - getting target temperature", this.accessory.displayName, this.thermostat.did);
+    if (this.debug) this.log("%s [%s] - getting target temperature", this.accessory.displayName, this.thermostat.did);
     var self = this;
     this.getDevice(function(e, d) {
         if(e) return callback(e, false);
         var pos = d?d.statusesMap.Position/10:0;
-        self.log("%s [%s] - target temperature is %d", self.accessory.displayName, self.thermostat.did,pos);
+        if (self.debug) self.log("%s [%s] - target temperature is %d", self.accessory.displayName, self.thermostat.did,pos);
         callback(null, pos);
     });
 };
 
 RademacherThermostatAccessory.prototype.setTargetTemperature = function(temperature, callback, context) {
     if (context) {
-        this.log("%s [%s] - setting target temperature to %d", this.accessory.displayName, this.thermostat.did, temperature);
+        if (this.debug) this.log("%s [%s] - setting target temperature to %d", this.accessory.displayName, this.thermostat.did, temperature);
         var self = this;
         this.targetTemperature=temperature;
 
@@ -86,20 +86,20 @@ RademacherThermostatAccessory.prototype.setTargetTemperature = function(temperat
 };
 
 RademacherThermostatAccessory.prototype.getTargetHeatingCoolingState = function(callback) {
-    this.log("%s - Getting target state", this.accessory.displayName);
+    if (this.debug) this.log("%s - Getting target state", this.accessory.displayName);
     return callback(null, this.currentState);
 };
 
 RademacherThermostatAccessory.prototype.setTargetHeatingCoolingState = function(status, callback, context) {
-    // TODO sates needed ?
+    // TODO states needed ?
     if (context) {
-        this.log("%s - Setting target state to %d", this.accessory.displayName, status);
+        if (this.debug) this.log("%s - Setting target state to %d", this.accessory.displayName, status);
         return callback(null, this.currentState);
     }
 };
 
 RademacherThermostatAccessory.prototype.update = function() {
-    this.log(`Updating %s [%s]`, this.accessory.displayName, this.thermostat.did);
+    if (this.debug) this.log(`Updating %s [%s]`, this.accessory.displayName, this.thermostat.did);
     var self = this;
 
     // Thermostat

@@ -3,8 +3,8 @@ var request = require("request");
 var tools = require("./tools.js");
 var RademacherAccessory = require("./RademacherAccessory.js");
 
-function RademacherDimmerAccessory(log, accessory, dimmer, session) {
-    RademacherAccessory.call(this, log, accessory, dimmer, session);
+function RademacherDimmerAccessory(log, debug, accessory, dimmer, session) {
+    RademacherAccessory.call(this, log, debug, accessory, dimmer, session);
     var self = this;
 
     this.dimmer = dimmer;
@@ -29,7 +29,7 @@ function RademacherDimmerAccessory(log, accessory, dimmer, session) {
 RademacherDimmerAccessory.prototype = Object.create(RademacherAccessory.prototype);
 
 RademacherDimmerAccessory.prototype.getStatus = function(callback) {
-    this.log("%s [%s] - Getting current state", this.accessory.displayName, this.dimmer.did);
+    if (this.debug) this.log("%s [%s] - Getting current state", this.accessory.displayName, this.dimmer.did);
 
     var self = this;
 
@@ -66,7 +66,7 @@ RademacherDimmerAccessory.prototype.setStatus = function(status, callback, conte
 };
 
 RademacherDimmerAccessory.prototype.getBrightness = function(callback) {
-    this.log("%s [%s] - Getting current brightness", this.accessory.displayName, this.dimmer.did);
+    if (this.debug) this.log("%s [%s] - Getting current brightness", this.accessory.displayName, this.dimmer.did);
 
     var self = this;
     this.getDevice(function(e, d) {
@@ -78,7 +78,7 @@ RademacherDimmerAccessory.prototype.getBrightness = function(callback) {
 
 RademacherDimmerAccessory.prototype.setBrightness = function(brightness, callback, context) {
     if (context) {
-        this.log("%s [%s] - Setting target brightness: %s", this.accessory.displayName, this.dimmer.did, brightness);
+        if (this.debug) this.log("%s [%s] - Setting target brightness: %s", this.accessory.displayName, this.dimmer.did, brightness);
         var self = this;
         this.currentBrightness = brightness;
         this.service.setCharacteristic(Characteristic.Brightness,brightness);
@@ -91,7 +91,7 @@ RademacherDimmerAccessory.prototype.setBrightness = function(brightness, callbac
 };
 
 RademacherDimmerAccessory.prototype.update = function() {
-    this.log(`Updating %s [%s]`, this.accessory.displayName, this.dimmer.did);
+    if (this.debug) this.log(`Updating %s [%s]`, this.accessory.displayName, this.dimmer.did);
     var self = this;
 
     // Status

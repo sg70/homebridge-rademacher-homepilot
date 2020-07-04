@@ -1,4 +1,4 @@
-function RademacherAccessory(log, accessory, data, session) {
+function RademacherAccessory(log, debug, accessory, data, session) {
     var info = accessory.getService(global.Service.AccessoryInformation);
     
     accessory.context.manufacturer = "Rademacher";
@@ -25,6 +25,7 @@ function RademacherAccessory(log, accessory, data, session) {
     
     this.accessory = accessory;
     this.log = log;
+    this.debug = debug
     this.session = session;
     this.did = data.did;
     this.lastUpdate = 0;

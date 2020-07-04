@@ -1,8 +1,8 @@
 var tools = require("./tools.js");
 var RademacherBlindsAccessory = require("./RademacherBlindsAccessory.js");
 
-function RademacherEnvironmentSensorAccessory(log, accessory, sensor, session, inverted) {
-	RademacherBlindsAccessory.call(this, log, accessory, sensor, session, inverted);
+function RademacherEnvironmentSensorAccessory(log, debug, accessory, sensor, session, inverted) {
+	RademacherBlindsAccessory.call(this, log, debug, accessory, sensor, session, inverted);
 
     this.sensor = sensor;
     this.services = [this.service];
@@ -35,7 +35,7 @@ RademacherEnvironmentSensorAccessory.prototype.getCurrentTemperature = function 
             if(data.did == did)
             {
                 var t = data.readings.temperature_primary;
-                self.log("%s [%s] - temperature is %s", self.accessory.displayName, self.sensor.did, t);
+                if (self.debug) self.log("%s [%s] - temperature is %s", self.accessory.displayName, self.sensor.did, t);
                 callback(null, t);
             }
         });
@@ -52,7 +52,7 @@ RademacherEnvironmentSensorAccessory.prototype.getCurrentAmbientLightLevel = fun
             if(data.did == did)
             {
                 var t = data.readings.sun_brightness;
-                self.log("%s [%s] - sun_brightness is %s", self.accessory.displayName, self.sensor.did, t);
+                if (self.debug) self.log("%s [%s] - sun_brightness is %s", self.accessory.displayName, self.sensor.did, t);
                 callback(null, t);
             }
         });

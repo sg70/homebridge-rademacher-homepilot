@@ -1,8 +1,8 @@
 var tools = require("./tools.js");
 var RademacherAccessory = require("./RademacherAccessory.js");
 
-function RademacherTemperatureSensorAccessory(log, accessory, sensor, session) {
-    RademacherAccessory.call(this, log, accessory, sensor, session);
+function RademacherTemperatureSensorAccessory(log, debug, accessory, sensor, session) {
+    RademacherAccessory.call(this, log, debug, accessory, sensor, session);
 
     this.sensor = sensor;
 
@@ -16,7 +16,7 @@ function RademacherTemperatureSensorAccessory(log, accessory, sensor, session) {
 RademacherTemperatureSensorAccessory.prototype = Object.create(RademacherAccessory.prototype);
 
 RademacherTemperatureSensorAccessory.prototype.getCurrentTemperature = function (callback) {
-    this.log("%s [%s] - getting current temperature", this.accessory.displayName, this.sensor.did);
+    if (this.debug) this.log("%s [%s] - getting current temperature", this.accessory.displayName, this.sensor.did);
 
     var self = this;
     var did = this.did;
@@ -27,7 +27,7 @@ RademacherTemperatureSensorAccessory.prototype.getCurrentTemperature = function 
             if(data.did == did)
             {
                 var t = data.readings.temperature_primary;
-                self.log("%s [%s] - temperature is %s", self.accessory.displayName, self.sensor.did, t);
+                if (self.debug) self.log("%s [%s] - temperature is %s", self.accessory.displayName, self.sensor.did, t);
                 callback(null, t);
             }
         });

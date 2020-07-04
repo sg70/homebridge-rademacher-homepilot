@@ -1,9 +1,9 @@
 var tools = require("./tools.js");
 var RademacherAccessory = require("./RademacherAccessory.js");
 
-function RademacherSunSensorAccessory(log, accessory, sensor, session) 
+function RademacherSunSensorAccessory(log, debug, accessory, sensor, session) 
 {
-    RademacherAccessory.call(this, log, accessory, sensor, session);
+    RademacherAccessory.call(this, log, debug, accessory, sensor, session);
 
     this.sensor = sensor;
     this.services = [];
@@ -30,7 +30,7 @@ RademacherSunSensorAccessory.prototype = Object.create(RademacherAccessory.proto
 
 RademacherSunSensorAccessory.prototype.getCurrentSunState = function(callback) 
 {
-    this.log("%s [%s] - Getting current sun state...", this.accessory.displayName, this.sensor.did);
+    if (this.debug) this.log("%s [%s] - Getting current sun state...", this.accessory.displayName, this.sensor.did);
     var self = this;
     var did = this.did;
     this.session.get("/v4/devices?devtype=Sensor", 2500, function (e, body) {
@@ -38,7 +38,7 @@ RademacherSunSensorAccessory.prototype.getCurrentSunState = function(callback)
         body.meters.forEach(function (data) {
             if (data.did == did) {
                 var t = data.readings.sun_detected;
-                self.log("%s [%s] - sun_detected=%s", self.accessory.displayName, self.sensor.did, t);
+                if (self.debug) self.log("%s [%s] - sun_detected=%s", self.accessory.displayName, self.sensor.did, t);
                 callback(null, t);
             }
         });

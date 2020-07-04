@@ -22,8 +22,9 @@ function responseError(e, r) {
     return error;
 }
 
-function RademacherHomePilotSession(log, url, password, password_hashed) {
+function RademacherHomePilotSession(log, debug, url, password, password_hashed) {
     this.log = log;
+    this.debug = debug;
     this.url = url;
     this.password_hashed ? (password_hashed == "true") : false;
     this.password = password ? (password_hashed?password:sha256hex(password)) : null;
@@ -96,7 +97,7 @@ RademacherHomePilotSession.prototype.logout = function(callback) {
     }, function(e, r, b) {
         var error = responseError(e, r);
         if (error) {
-            self.log("Logout error: " + error);
+            if (self.debug) self.log("Logout error: " + error);
             callback(error);
         } else {
             callback(null);

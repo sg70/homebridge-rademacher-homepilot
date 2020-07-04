@@ -1,8 +1,8 @@
 var tools = require("./tools.js");
 var RademacherAccessory = require("./RademacherAccessory.js");
 
-function RademacherSceneAccessory(log, accessory, scene, session) {
-    RademacherAccessory.call(this, log, accessory, scene, session);
+function RademacherSceneAccessory(log, debug, accessory, scene, session) {
+    RademacherAccessory.call(this, log, debug, accessory, scene, session);
 
     this.scene = scene;
 
@@ -29,7 +29,7 @@ RademacherSceneAccessory.prototype.getScene = function(callback) {
             }
             else
             {
-                self.log('no scene');
+                if (self.debug) self.log('no scene');
                 callback(null, self.scene);
             }
     	});
