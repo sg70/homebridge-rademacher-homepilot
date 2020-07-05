@@ -56,7 +56,7 @@ function RademacherHomePilot(log, config, api) {
                             }
                             else {
                                 self.log("blinds are online: %s [%s]", accessory.displayName, data.did);
-                                self.accessories[uuid] = new RademacherBlindsAccessory(self.log, (accessory instanceof RademacherBlindsAccessory ? accessory.accessory : accessory), data, self.session, self.inverted);
+                                self.accessories[uuid] = new RademacherBlindsAccessory(self.log, self.debug, (accessory instanceof RademacherBlindsAccessory ? accessory.accessory : accessory), data, self.session, self.inverted);
                             }
                         }
                         // dimmer
@@ -67,7 +67,7 @@ function RademacherHomePilot(log, config, api) {
                             }
                             else {
                                 self.log("dimmer is online: %s [%s]", accessory.displayName, data.did);
-                                self.accessories[uuid] = new RademacherDimmerAccessory(self.log, (accessory instanceof RademacherDimmerAccessory ? accessory.accessory : accessory), data, self.session, self.inverted);
+                                self.accessories[uuid] = new RademacherDimmerAccessory(self.log, self.debug, (accessory instanceof RademacherDimmerAccessory ? accessory.accessory : accessory), data, self.session, self.inverted);
                             }
                         }
                         // thermostat
@@ -78,7 +78,7 @@ function RademacherHomePilot(log, config, api) {
                             }
                             else {
                                 self.log("thermostat is online: %s [%s]", accessory.displayName, data.did);
-                                self.accessories[uuid] = new RademacherThermostatAccessory(self.log, (accessory instanceof RademacherThermostatAccessory ? accessory.accessory : accessory), data, self.session, self.inverted);
+                                self.accessories[uuid] = new RademacherThermostatAccessory(self.log, self.debug, (accessory instanceof RademacherThermostatAccessory ? accessory.accessory : accessory), data, self.session, self.inverted);
                             }
                         }
                         // lock/switch
@@ -92,7 +92,7 @@ function RademacherHomePilot(log, config, api) {
                                 else
                                 { 
                                     self.log("lock is online: %s [%s]", accessory.displayName, data.did);
-                                    self.accessories[uuid] = new RademacherLockAccessory(self.log, (accessory instanceof RademacherLockAccessory ? accessory.accessory : accessory), data, self.session);
+                                    self.accessories[uuid] = new RademacherLockAccessory(self.log, self.debug, (accessory instanceof RademacherLockAccessory ? accessory.accessory : accessory), data, self.session);
                                 }
                             }
                             else {
@@ -102,7 +102,7 @@ function RademacherHomePilot(log, config, api) {
                                 else
                                 {
                                     self.log("switch is online: %s [%s]", accessory.displayName, data.did);
-                                    self.accessories[uuid] = new RademacherSwitchAccessory(self.log, (accessory instanceof RademacherSwitchAccessory ? accessory.accessory : accessory), data, self.session);
+                                    self.accessories[uuid] = new RademacherSwitchAccessory(self.log, self.debug, (accessory instanceof RademacherSwitchAccessory ? accessory.accessory : accessory), data, self.session);
                                 }
                             }
                         }
@@ -145,7 +145,7 @@ function RademacherHomePilot(log, config, api) {
                             }
                             else {
                                 self.log("smoke alarm is online: %s [%s]", accessory.displayName, data.did);
-                                self.accessories[uuid] = new RademacherSmokeAlarmAccessory(self.log, (accessory instanceof RademacherSmokeAlarmAccessory ? accessory.accessory : accessory), data, self.session);
+                                self.accessories[uuid] = new RademacherSmokeAlarmAccessory(self.log, self.debug, (accessory instanceof RademacherSmokeAlarmAccessory ? accessory.accessory : accessory), data, self.session);
                             }
                         }
                         // environment sensor
@@ -166,7 +166,7 @@ function RademacherHomePilot(log, config, api) {
                             }
                             else {
                                 self.log("temperature sensor is online: %s [%s]", accessory.displayName, data.did);
-                                self.accessories[uuid] = new RademacherTemperatureSensorAccessory(self.log, (accessory instanceof RademacherTemperatureSensorAccessory ? accessory.accessory : accessory), data, self.session);
+                                self.accessories[uuid] = new RademacherTemperatureSensorAccessory(self.log, self.debug, (accessory instanceof RademacherTemperatureSensorAccessory ? accessory.accessory : accessory), data, self.session);
                             }
                         }
                         // door/window sensor
@@ -177,7 +177,7 @@ function RademacherHomePilot(log, config, api) {
                             }
                             else {
                                 self.log("door sensor is online: %s [%s]", accessory.displayName, data.did);
-                                self.accessories[uuid] = new RademacherDoorSensorAccessory(self.log, (accessory instanceof RademacherDoorSensorAccessory ? accessory.accessory : accessory), data, self.session);
+                                self.accessories[uuid] = new RademacherDoorSensorAccessory(self.log, self.debug, (accessory instanceof RademacherDoorSensorAccessory ? accessory.accessory : accessory), data, self.session);
                             }
                         }                    
                         // unknown
@@ -208,7 +208,7 @@ function RademacherHomePilot(log, config, api) {
                             }
                             else {
                                 self.log("scene is online: %s [%s]", accessory.displayName, data.sid);
-                                self.accessories[uuid] = new RademacherSceneAccessory(self.log, (accessory instanceof RademacherSceneAccessory ? accessory.accessory : accessory), data, self.session);
+                                self.accessories[uuid] = new RademacherSceneAccessory(self.log, self.debug, (accessory instanceof RademacherSceneAccessory ? accessory.accessory : accessory), data, self.session);
                             }
                         }
                     });
