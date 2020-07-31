@@ -1,8 +1,8 @@
 var tools = require("./tools.js");
-var RademacherBlindsAccessory = require("./RademacherBlindsAccessory.js");
+var RademacherAccessory = require("./RademacherAccessory.js");
 
 function RademacherEnvironmentSensorAccessory(log, debug, accessory, sensor, session, inverted) {
-	RademacherBlindsAccessory.call(this, log, debug, accessory, sensor, session, inverted);
+	RademacherAccessory.call(this, log, debug, accessory, sensor, session, inverted);
 
     this.sensor = sensor;
     this.services = [this.service];
@@ -22,7 +22,7 @@ function RademacherEnvironmentSensorAccessory(log, debug, accessory, sensor, ses
     this.services.push(lightService);
 }
 
-RademacherEnvironmentSensorAccessory.prototype = Object.create(RademacherBlindsAccessory.prototype);
+RademacherEnvironmentSensorAccessory.prototype = Object.create(RademacherAccessory.prototype);
 
 RademacherEnvironmentSensorAccessory.prototype.getCurrentTemperature = function (callback) {
     this.log("%s [%s] - Getting current temperature", this.accessory.displayName, this.sensor.did);
