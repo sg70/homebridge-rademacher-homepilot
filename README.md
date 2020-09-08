@@ -3,7 +3,7 @@ Homebridge plugin for Rademacher Homepilot.
 
 # Installation
 Follow the instruction in [homebridge](https://www.npmjs.com/package/homebridge) for the homebridge server installation.
-The plugin is published through [NPM](https://www.npmjs.com/package/homebridge-rademacher-homepilot) and should be installed "globally" by typing:
+The plugin is published through [npm](https://www.npmjs.com/package/homebridge-rademacher-homepilot) and should be installed "globally" by typing:
 ```
 npm install -g homebridge-rademacher-homepilot
 ```
