@@ -3,7 +3,7 @@ Homebridge plugin for Rademacher Homepilot.
 
 # Installation
 Follow the instruction in [homebridge](https://www.npmjs.com/package/homebridge) for the homebridge server installation.
-The plugin is published through [NPM](https://www.npmjs.com/package/homebridge-rademacher-homepilot) and should be installed "globally" by typing:
+The plugin is published through [npm](https://www.npmjs.com/package/homebridge-rademacher-homepilot) and should be installed "globally" by typing:
 ```
 npm install -g homebridge-rademacher-homepilot
 ```
@@ -39,10 +39,8 @@ The official Homebridge Discord server and Reddit community are where users can 
 
 <span align="center">
 
-[![Homebridge Discord](https://discordapp.com/api/guilds/432663330281226270/widget.png?style=banner2)](https://discord.gg/kqNCe2D) [![Homebridge Reddit](.github/homebridge-reddit.svg?sanitize=true)](https://www.reddit.com/r/homebridge/)
+[![Homebridge Discord](https://discordapp.com/api/guilds/432663330281226270/widget.png?style=banner2)](https://discord.gg/kqNCe2D) [![Homebridge Reddit](images/homebridge-reddit.svg?sanitize=true)](https://www.reddit.com/r/homebridge/)
 
 </span>
 
 HomeKit communities can also be found on both [Discord](https://discord.gg/RcV7fa8) and [Reddit](https://www.reddit.com/r/homekit).
-
-
