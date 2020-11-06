@@ -40,6 +40,9 @@ function RademacherBlindsAccessory(log, debug, accessory, blind, session, invert
         .setValue(this.blind.hasErrors)
         .on('get', this.getObstructionDetected.bind(this));
 
+    // TODO configure interval
+    setInterval(this.update.bind(this), 20000);
+
 }
 
 RademacherBlindsAccessory.prototype = Object.create(RademacherAccessory.prototype);
@@ -49,16 +52,12 @@ RademacherBlindsAccessory.prototype.setTargetPosition = function(value, callback
 
     var self = this;
     this.currentTargetPosition = value;
-    var moveUp = (this.currentTargetPosition >= this.lastPosition);
-    this.service.setCharacteristic(global.Characteristic.PositionState,
-        (moveUp ? global.Characteristic.PositionState.INCREASING : global.Characteristic.PositionState.DECREASING));
     var target = self.inverted ? tools.reversePercentage(value) : value;
 
     var params = {name: "GOTO_POS_CMD", value: target};
     this.session.put("/devices/"+this.blind.did, params, 2500, function(e) {
         if(e) return callback(new Error("Request failed: "+e), false);
         self.service.setCharacteristic(global.Characteristic.CurrentPosition, self.currentTargetPosition);
-        self.service.setCharacteristic(global.Characteristic.PositionState, global.Characteristic.PositionState.STOPPED);
         self.lastPosition = self.currentTargetPosition;
         callback(null, self.currentTargetPosition);
     });
@@ -130,6 +129,20 @@ RademacherBlindsAccessory.prototype.getObstructionDetected = function(callback) 
             callback(null, false);
         }
     });
+};
+
+RademacherBlindsAccessory.prototype.update = function() {
+    //if (this.blind.did==10015) this.debug=true
+    if (this.debug) this.log(`%s - [%s] updating`, this.accessory.displayName, this.blind.did);
+    var self = this;
+
+    // Switch state
+    this.getCurrentPosition(function(foo, pos) {
+        if (self.debug) self.log(`%s [%s] - updated position to %s`, self.accessory.displayName, self.blind.did, pos);
+        self.service.updateCharacteristic(Characteristic.CurrentPosition, pos);
+        self.service.updateCharacteristic(Characteristic.TargetPosition, pos);
+    }.bind(this));
+
 };
 
 module.exports = RademacherBlindsAccessory;
