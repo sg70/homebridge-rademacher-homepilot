@@ -41,7 +41,10 @@ function RademacherHomePilot(log, config, api) {
 
         this.api.on('didFinishLaunching', function() {
             var handleActuators = function(e, body) {
-                if(e) throw new Error("Request failed: "+e);
+                if(e) {
+                  self.log("Request failed: "+e);
+                  return;
+                }
                 if (body.devices)
                 {
                     body.devices.forEach(function(data) {
@@ -130,7 +133,10 @@ function RademacherHomePilot(log, config, api) {
                 }
             };
             var handleSensors = function(e, body) {
-                if(e) throw new Error("Request failed: "+e);
+                if(e) {
+                    self.log("Request failed: "+e);
+                    return;
+                }
                 if (body.meters)
                 {
                     body.meters.forEach(function(data) {
@@ -194,7 +200,10 @@ function RademacherHomePilot(log, config, api) {
                 }
             };
             var handleScenes = function(e, body) {
-                if(e) throw new Error("Request failed: "+e);
+                if(e) {
+                    self.log("Request failed: "+e);
+                    return;
+                }
                 if (body.scenes)
                 {
                     body.scenes.forEach(function(data) {
@@ -219,7 +228,10 @@ function RademacherHomePilot(log, config, api) {
                 }
             };
             self.session.login(function(e) {
-                if(e) throw new Error("Login failed: "+e);
+                if(e) {
+                    self.log("Login failed: "+e);
+                    return;
+                }
                 self.session.get("/v4/devices?devtype=Actuator", 5000, handleActuators);
                 self.session.get("/v4/devices?devtype=Sensor", 5000, handleSensors);
                 if (config["scenes_as_switch"] && config["scenes_as_switch"]=="true")
