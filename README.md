@@ -17,7 +17,8 @@ Configuration sample:
       {
         "platform": "RademacherHomePilot",
         "name": "RademacherHomePilot",
-        "url": "http://192.168.0.1"
+        "url": "http://192.168.0.1",
+        "scenes_as_switch":"false"
       }
     ]
 ```

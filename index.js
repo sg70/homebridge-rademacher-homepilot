@@ -8,6 +8,7 @@ var RademacherSwitchAccessory = require ('./accessories/RademacherSwitchAccessor
 var RademacherSmokeAlarmAccessory = require ('./accessories/RademacherSmokeAlarmAccessory.js');
 var RademacherEnvironmentSensorAccessory = require ('./accessories/RademacherEnvironmentSensorAccessory.js');
 var RademacherThermostatAccessory = require('./accessories/RademacherThermostatAccessory.js');
+var RademacherSceneAccessory = require ('./accessories/RademacherSceneAccessory.js');
 
 module.exports = function(homebridge) {
     global.Accessory = homebridge.platformAccessory;
@@ -148,6 +149,30 @@ function RademacherHomePilot(log, config, api) {
                     }
                 });
             });
+            if (config["scenes_as_switch"] && config["scenes_as_switch"]=="true") {
+                request.get({
+                    timeout: 1500,
+                    strictSSL: false,
+                    url: this.url + "/sceneajax.do?scenes=1"
+                }, function(e,r,b){
+                    if(e) return new Error("Request failed.");
+                    var body = JSON.parse(b);
+                    body.scenes.forEach(function(data) {
+                        if (data.isExecutable == 1) {
+                            var uuid = UUIDGen.generate("sid"+data.sid);
+                            var accessory = self.accessories[uuid];
+
+                            if (accessory === undefined) {
+                                self.addSceneAccessory(data);
+                            }
+                            else {
+                                self.log("scene is online: %s [%s]", accessory.displayName, data.sid);
+                                self.accessories[uuid] = new RademacherSceneAccessory(self.log, (accessory instanceof RademacherSceneAccessory ? accessory.accessory : accessory), data, self.url);
+                            }
+                        }
+                    });
+                });
+            }
         }.bind(this));
     }
 }
@@ -263,6 +288,21 @@ RademacherHomePilot.prototype.addSwitchAccessory = function(sw) {
     this.accessories[accessory.UUID] = new RademacherSwitchAccessory(this.log, accessory, sw, this.url);
     this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
     this.log("Added switch: %s - %s [%s]", sw.name, sw.description, sw.did);
+};
+
+RademacherHomePilot.prototype.addSceneAccessory = function(scene) {
+    this.log("Found scene: %s - %s [%s]", scene.name, scene.description, scene.sid);
+
+    var name = null;
+    if(!scene.description.trim())
+        name = scene.name;
+    else
+        name = scene.description;
+    var accessory = new global.Accessory(name, UUIDGen.generate("sid"+scene.sid));
+    accessory.addService(global.Service.Switch, name);
+    this.accessories[accessory.UUID] = new RademacherSceneAccessory(this.log, accessory, scene, this.url);
+    this.api.registerPlatformAccessories("homebridge-rademacher-homepilot", "RademacherHomePilot", [accessory]);
+    this.log("Added scene: %s - %s [%s]", scene.name, scene.description, scene.sid);
 };
 
 RademacherHomePilot.prototype.addLockAccessory = function(sw) {
